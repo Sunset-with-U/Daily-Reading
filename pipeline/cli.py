@@ -194,11 +194,14 @@ def cmd_health(args) -> int:
     sources = load_sources()
     from .fetch import run_fetch
 
-    # 探活所有源（含禁用），不筛班次
+    # 探活所有源（含禁用、含晚报专属），只跳过未配密钥的 twitter 组
     wanted, _ = select_sources(sources, edition="morning", include_disabled=True)
-    weekly = [s for s in sources if s.schedule == "weekly" and s not in wanted]
-    print(f"[health] 探活 {len(wanted) + len(weekly)} 源 …")
-    results = run_fetch(wanted + weekly, ctx)
+    probed_ids = {s.id for s in wanted}
+    extra = [s for s in sources
+             if s.id not in probed_ids
+             and not (s.method == "twitter" and not os.environ.get("TWITTERAPI_IO_KEY"))]
+    print(f"[health] 探活 {len(wanted) + len(extra)} 源 …")
+    results = run_fetch(wanted + extra, ctx)
     from .util import DATA_DIR, save_json
 
     failures = persist.update_failure_counters(results)
