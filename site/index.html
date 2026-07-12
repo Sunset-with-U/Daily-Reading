@@ -1,68 +1,58 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="light">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Daily Reading · 每日金融研究看板</title>
-<style>
-  /* 雏形页（Phase 6 将替换为完整看板）—— Claude 色系 */
-  :root {
-    --bg: #F0EEE6; --surface: #FAF9F5; --text: #141413;
-    --muted: #6a6a67; --accent: #D97757; --border: #e3e0d5;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root { --bg: #141413; --surface: #1f1e1c; --text: #F0EEE6;
-            --muted: #9a988f; --border: #33322e; }
-  }
-  * { box-sizing: border-box; margin: 0; }
-  body {
-    background: var(--bg); color: var(--text);
-    font: 16px/1.7 -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
-    max-width: 860px; margin: 0 auto; padding: 48px 20px;
-  }
-  h1 { font-family: Georgia, "Songti SC", "Noto Serif SC", serif;
-       font-size: 2rem; margin-bottom: .4rem; }
-  h1 .dot { color: var(--accent); }
-  .sub { color: var(--muted); margin-bottom: 2rem; }
-  .card { background: var(--surface); border: 1px solid var(--border);
-          border-radius: 12px; padding: 20px 24px; margin-bottom: 14px; }
-  .item-title { font-weight: 600; text-decoration: none; color: var(--text); }
-  .item-title:hover { color: var(--accent); }
-  .meta { color: var(--muted); font-size: .85rem; margin-top: 4px; }
-  .badge { display: inline-block; background: var(--accent); color: #fff;
-           border-radius: 6px; padding: 0 8px; font-size: .78rem; margin-right: 8px; }
-  #status { color: var(--muted); }
-</style>
+<meta name="description" content="面向职业交易员的每日信息流研究看板：AI 逐条分析 + 每日深度市场报告">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>📖</text></svg>">
+<link rel="stylesheet" href="css/style.css">
+<script>
+  // 首屏防闪烁：尽早应用主题
+  (function () {
+    var saved = localStorage.getItem("dr-theme");
+    var theme = saved || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.dataset.theme = theme;
+  })();
+</script>
 </head>
 <body>
-  <h1>Daily Reading<span class="dot">.</span></h1>
-  <p class="sub">每日金融研究看板 · 建设中（雏形页）— 完整看板即将上线</p>
-  <div id="status" class="card">正在加载数据 …</div>
-  <div id="feed"></div>
-<script>
-(async () => {
-  const status = document.getElementById("status");
-  const feed = document.getElementById("feed");
-  try {
-    const idx = await (await fetch("data/index.json")).json();
-    if (!idx.latest_date) { status.textContent = "暂无数据（等待第一次管线运行）"; return; }
-    const day = await (await fetch(`data/${idx.latest_date}/items.json`)).json();
-    const items = (day.items || []).slice(0, 50);
-    status.textContent = `最新数据：${idx.latest_date} · 共 ${day.items.length} 条`;
-    for (const it of items) {
-      const card = document.createElement("div");
-      card.className = "card";
-      const imp = it.analysis && it.analysis.importance
-        ? `<span class="badge">${it.analysis.importance}</span>` : "";
-      card.innerHTML = `
-        ${imp}<a class="item-title" href="${it.url}" target="_blank" rel="noopener">${it.title}</a>
-        <div class="meta">${it.source_name_zh || it.source_id} · ${it.published_at || it.fetched_at || ""}</div>`;
-      feed.appendChild(card);
-    }
-  } catch (e) {
-    status.textContent = "数据加载失败：" + e.message;
-  }
-})();
-</script>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="#/report">Daily&nbsp;Reading<span class="brand-dot">.</span></a>
+      <nav class="nav" id="nav">
+        <a href="#/report" data-route="report">今日报告</a>
+        <a href="#/feed" data-route="feed">信息流</a>
+        <a href="#/watchlist" data-route="watchlist">关注清单</a>
+        <a href="#/market" data-route="market">市场快照</a>
+        <a href="#/archive" data-route="archive">归档</a>
+        <a href="#/sources" data-route="sources">源状态</a>
+      </nav>
+      <div class="controls">
+        <div class="date-nav" id="date-nav" title="切换日期">
+          <button id="date-prev" aria-label="前一天">‹</button>
+          <span id="date-label">—</span>
+          <button id="date-next" aria-label="后一天">›</button>
+        </div>
+        <button id="theme-toggle" class="icon-btn" aria-label="切换明暗主题">◐</button>
+      </div>
+    </div>
+  </header>
+
+  <div id="tickertape" class="tickertape"></div>
+
+  <main id="view" class="view">
+    <div class="loading">正在加载数据 …</div>
+  </main>
+
+  <footer class="footer">
+    <p>Daily Reading — 开源的每日金融研究看板 ·
+      <a href="https://github.com/Sunset-with-U/Daily-Reading" target="_blank" rel="noopener">GitHub</a></p>
+    <p class="footer-note">行情图表由 <a href="https://www.tradingview.com/" target="_blank" rel="noopener">TradingView</a> 提供 ·
+      AI 分析由 Claude 生成，仅供研究参考，不构成投资建议</p>
+  </footer>
+
+  <script src="js/vendor/marked.umd.js"></script>
+  <script type="module" src="js/app.js"></script>
 </body>
 </html>

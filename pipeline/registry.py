@@ -58,9 +58,10 @@ def _validate(src: SourceConfig, seen_ids: set[str]) -> None:
     if src.schedule not in VALID_SCHEDULES:
         raise ValueError(f"源 `{src.id}`: 未知 schedule `{src.schedule}`")
     if src.method == "twitter":
-        if not src.handles:
+        if not src.handles and src.enabled:
             raise ValueError(f"源 `{src.id}`: twitter 方法需要 handles 列表")
-    elif not src.url:
+    elif not src.url and src.enabled:
+        # 禁用的占位条目（待补 feed URL）允许无 url
         raise ValueError(f"源 `{src.id}`: 缺少 url")
 
 

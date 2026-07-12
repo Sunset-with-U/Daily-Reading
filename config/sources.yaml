@@ -138,8 +138,8 @@ sources:
     lang: zh
     method: rsshub
     url: /gov/zhengce/zuixin
-    test_group: pilot
-    notes: 走本地 RSSHub 实例
+    enabled: false
+    notes: CI 实测路由返回 503 route-is-empty（2026-07-12），改走 gov-cn-zhengceku 官方 JSON API；留此条目待 RSSHub 修复后再启用
 
   - id: rmrb-paper
     name: People's Daily
@@ -154,3 +154,1320 @@ sources:
     max_items: 25
     test_group: pilot
     notes: 电子版按版面遍历，全文可得；每日凌晨更新
+
+  # ════════════ 全球财经媒体（global_media） ════════════
+  # 2026-07 调研：Bloomberg/WSJ/FT/Nikkei/SCMP 有官方 RSS 但均为标题层；
+  # Reuters(2020)/Economist(2024) 已停供 RSS → Google News 兜底。
+
+  - id: bloomberg-economics
+    name: Bloomberg Economics
+    name_zh: 彭博·经济
+    tier: A
+    category: global_media
+    lang: en
+    method: rss
+    url: https://feeds.bloomberg.com/economics/news.rss
+    max_items: 15
+    notes: 官方分栏 RSS（confirmed）；标题层，正文付费墙
+
+  - id: bloomberg-opinion
+    name: Bloomberg Opinion
+    name_zh: 彭博·观点
+    category: global_media
+    lang: en
+    method: rss
+    url: https://feeds.bloomberg.com/bview/news.rss
+    max_items: 15
+    notes: 官方 Opinion 分栏 RSS（confirmed）；标题层，含 Matt Levine 等专栏标题
+
+  - id: bloomberg-technology
+    name: Bloomberg Technology
+    name_zh: 彭博·科技
+    category: global_media
+    lang: en
+    method: rss
+    url: https://feeds.bloomberg.com/technology/news.rss
+    max_items: 15
+    notes: 官方分栏 RSS（confirmed）；标题层
+
+  - id: wsj-world
+    name: WSJ World News
+    name_zh: 华尔街日报·国际
+    tier: A
+    category: global_media
+    lang: en
+    method: rss
+    url: https://feeds.a.dj.com/rss/RSSWorldNews.xml
+    max_items: 15
+    notes: 道琼斯官方 feed（confirmed）；标题层，含 Lingling Wei 中国线报道标题
+
+  - id: ft-home
+    name: FT Home
+    name_zh: 金融时报·首页
+    tier: A
+    category: global_media
+    lang: en
+    method: rss
+    url: https://www.ft.com/rss/home
+    max_items: 20
+    notes: 官方首页 feed（confirmed）；标题层，正文硬付费墙
+
+  - id: ft-markets
+    name: FT Markets
+    name_zh: 金融时报·市场
+    tier: A
+    category: global_media
+    lang: en
+    method: rss
+    url: "https://www.ft.com/markets?format=rss"
+    max_items: 15
+    notes: 任意栏目 ?format=rss 模式（confirmed）；标题层
+
+  - id: ft-global-economy
+    name: FT Global Economy
+    name_zh: 金融时报·全球经济
+    category: global_media
+    lang: en
+    method: rss
+    url: "https://www.ft.com/global-economy?format=rss"
+    max_items: 15
+    notes: ?format=rss 模式（likely）；标题层
+
+  - id: ft-china
+    name: FT China
+    name_zh: 金融时报·中国
+    category: global_media
+    lang: en
+    method: rss
+    url: "https://www.ft.com/china?format=rss"
+    max_items: 15
+    notes: ?format=rss 模式套用到 china 栏目（unverified，CI 探活）；标题层
+
+  - id: ft-alphaville
+    name: FT Alphaville
+    name_zh: 金融时报·Alphaville
+    tier: A
+    category: global_media
+    lang: en
+    method: rss
+    url: "https://www.ft.com/alphaville?format=rss"
+    max_items: 15
+    notes: ?format=rss（confirmed）；正文注册免费但 feed 仅预览，抓全文需登录态（暂不做）
+
+  - id: economist-gnews
+    name: The Economist (Google News)
+    name_zh: 经济学人
+    tier: A
+    category: global_media
+    lang: en
+    method: google_news
+    url: "site:economist.com when:1d"
+    max_items: 15
+    notes: "官方 RSS 2024 年起实质停供（confirmed）→ Google News site: 兜底；标题层，链接为谷歌跳转"
+
+  - id: reuters-gnews
+    name: Reuters (Google News)
+    name_zh: 路透社
+    tier: A
+    category: global_media
+    lang: en
+    method: google_news
+    url: "site:reuters.com when:1d"
+    max_items: 20
+    notes: "官方 RSS 2020 年已关（confirmed）→ Google News site: 兜底；标题层"
+
+  - id: nikkei-asia
+    name: Nikkei Asia
+    name_zh: 日经亚洲
+    tier: A
+    category: global_media
+    lang: en
+    method: rss
+    url: https://asia.nikkei.com/rss/feed/nar
+    max_items: 15
+    notes: 官方 feed（confirmed）；标题层，正文付费墙
+
+  - id: scmp-news
+    name: SCMP News
+    name_zh: 南华早报·新闻
+    category: global_media
+    lang: en
+    method: rss
+    url: https://www.scmp.com/rss/91/feed
+    max_items: 15
+    notes: 官方栏目 feed，91=news（confirmed）；预览层，计量付费墙
+
+  - id: scmp-china
+    name: SCMP China
+    name_zh: 南华早报·中国
+    category: global_media
+    lang: en
+    method: rss
+    url: https://www.scmp.com/rss/4/feed
+    max_items: 15
+    notes: 栏目 ID 4=China 系社区常引用值（likely，CI 验证）；预览层
+
+  # ════════════ 中文财经媒体（cn_media） ════════════
+  # 调研：财新有官方稀疏 feed（标题层）；一财/观察者走 RSSHub 路由；
+  # 21财经/经观/新京报等无 feed → Google News 兜底。
+
+  - id: caixin
+    name: Caixin
+    name_zh: 财新网
+    tier: A
+    category: cn_media
+    lang: zh
+    method: rss
+    url: https://gateway.caixin.com/api/data/global/feedlyRss.xml
+    max_items: 15
+    notes: 官方 Feedly 向 feed（confirmed 但更新稀疏）；标题层，付费墙严；备选 RSSHub caixin 路由/Telegram @caixin_web
+
+  - id: caixin-global
+    name: Caixin Global (Google News)
+    name_zh: 财新国际
+    category: cn_media
+    lang: en
+    method: google_news
+    url: "site:caixinglobal.com when:1d"
+    max_items: 15
+    notes: 无官方 RSS（RSSHub issue #10999 仍开着，likely）→ Google News 兜底；标题层
+
+  - id: yicai-latest
+    name: Yicai Latest
+    name_zh: 第一财经
+    category: cn_media
+    lang: zh
+    method: rsshub
+    url: /yicai/latest
+    notes: RSSHub /yicai/latest 路由（文档 confirmed）；全文免费
+
+  - id: yicai-global
+    name: Yicai Global (Google News)
+    name_zh: 第一财经·英文
+    category: cn_media
+    lang: en
+    method: google_news
+    url: "site:yicaiglobal.com when:1d"
+    max_items: 15
+    notes: 未发现 RSS（unverified）→ Google News 兜底；正文免费
+
+  - id: 21jingji-gnews
+    name: 21st Century Business Herald
+    name_zh: 21世纪经济报道
+    category: cn_media
+    lang: zh
+    method: google_news
+    url: "site:21jingji.com when:1d"
+    max_items: 15
+    notes: 无 RSS（unverified）→ Google News 兜底；监管动态快，标题层
+
+  - id: eeo-gnews
+    name: Economic Observer
+    name_zh: 经济观察报
+    tier: C
+    category: cn_media
+    lang: zh
+    method: google_news
+    url: "site:eeo.com.cn when:2d"
+    max_items: 10
+    notes: 周报节奏，无 RSS（unverified）→ Google News 兜底
+
+  - id: guancha
+    name: Guancha
+    name_zh: 观察者网
+    category: cn_media
+    lang: zh
+    method: rsshub
+    url: /guancha
+    notes: RSSHub /guancha/:category? 路由（文档 confirmed）；民族主义+发展主义视角，需识别框架立场
+
+  - id: thepaper-rsshub
+    name: The Paper (RSSHub)
+    name_zh: 澎湃新闻·RSSHub备用
+    category: cn_media
+    lang: zh
+    method: rsshub
+    url: /thepaper/channel/25950
+    enabled: false
+    notes: RSSHub 澎湃频道路由（文档 confirmed，频道 id 可换）；主路 feedx pilot 挂掉时启用
+
+  - id: bjnews-gnews
+    name: Beijing News
+    name_zh: 新京报
+    tier: C
+    category: cn_media
+    lang: zh
+    method: google_news
+    url: "site:bjnews.com.cn when:1d"
+    max_items: 10
+    notes: 无稳定 RSS（unverified）→ Google News 兜底；时政与社会议题
+
+  - id: initium-gnews
+    name: Initium Media
+    name_zh: 端传媒
+    tier: C
+    category: cn_media
+    lang: zh
+    method: google_news
+    url: "site:theinitium.com when:2d"
+    max_items: 10
+    notes: 付费墙，无公开 feed（unverified）→ Google News 标题层
+
+  - id: 36kr
+    name: 36Kr
+    name_zh: 36氪
+    category: cn_media
+    lang: zh
+    method: rss
+    url: https://36kr.com/feed
+    max_items: 20
+    notes: 官方 feed，社区长期在用（unverified，CI 探活）；科技商业
+
+  - id: huxiu
+    name: Huxiu
+    name_zh: 虎嗅
+    tier: C
+    category: cn_media
+    lang: zh
+    method: rss
+    url: https://www.huxiu.com/rss/0.xml
+    max_items: 15
+    notes: 官方 rss/0.xml 历史存在（unverified，CI 探活）；失效则换 RSSHub /huxiu 路由
+
+  - id: latepost
+    name: LatePost
+    name_zh: 晚点 LatePost
+    category: cn_media
+    lang: zh
+    method: rsshub
+    url: /latepost
+    max_items: 10
+    notes: RSSHub 晚点路由（unverified，CI 探活）；深度稿低频，部分付费
+
+  - id: caijing-gnews
+    name: Caijing Magazine
+    name_zh: 财经杂志
+    tier: C
+    category: cn_media
+    lang: zh
+    method: google_news
+    url: "site:caijing.com.cn when:2d"
+    max_items: 10
+    notes: 无 RSS（unverified）→ Google News 兜底
+
+  - id: banyuetan-gnews
+    name: Banyuetan
+    name_zh: 半月谈
+    tier: C
+    category: cn_media
+    lang: zh
+    method: google_news
+    url: "site:banyuetan.org when:2d"
+    max_items: 10
+    notes: 新华社系基层刊物，站点无 feed（unverified）→ Google News 兜底；主阵地在微信，待 wechat2rss
+
+  # ════════════ 中文官方与政策（cn_official） ════════════
+  # 调研：官方站基本无 RSS；电子报/列表页静态 HTML 直抓（parser 已建骨架），
+  # gov.cn/中纪委走 RSSHub 路由；人民银行有 wzws WAF，需 headless，暂关。
+
+  - id: xwlb
+    name: CCTV Xinwen Lianbo
+    name_zh: 央视新闻联播·文字版
+    tier: A
+    category: cn_official
+    lang: zh
+    method: html_scrape
+    url: "https://tv.cctv.com/lm/xwlb/day/{date_compact}.shtml"
+    parser: xwlb.parse
+    schedule: evening
+    max_items: 20
+    notes: 每日一页列当天条目（confirmed）；文字稿约 21 点齐全，晚报班次（北京20点）抓当日可能不全——已知坑
+
+  - id: xinhua-politics
+    name: Xinhua Politics
+    name_zh: 新华网·时政
+    tier: A
+    category: cn_official
+    lang: zh
+    method: html_scrape
+    url: https://www.news.cn/politics/
+    parser: xinhuanet.parse_list
+    max_items: 20
+    notes: 中文站无可靠官方 RSS（likely）→ 频道列表页直抓，全文可得；重点看权威发布/新华时评
+
+  - id: xinhua-fortune
+    name: Xinhua Fortune
+    name_zh: 新华网·财经
+    tier: A
+    category: cn_official
+    lang: zh
+    method: html_scrape
+    url: https://www.news.cn/fortune/
+    parser: xinhuanet.parse_list
+    max_items: 20
+    notes: 同上，财经频道列表页直抓（likely）
+
+  - id: qstheory-feedx
+    name: Qiushi (FeedX)
+    name_zh: 求是
+    tier: A
+    category: cn_official
+    lang: zh
+    method: rss
+    url: https://feedx.net/rss/qiushi.xml
+    max_items: 10
+    notes: 半月刊；FeedX 第三方全文源（likely，稳定性一般）；最高领导人重要文章首发地
+
+  - id: qstheory-list
+    name: Qiushi Web Commentary
+    name_zh: 求是网·网评
+    category: cn_official
+    lang: zh
+    method: html_scrape
+    url: https://www.qstheory.cn/
+    parser: qstheory.parse_list
+    max_items: 15
+    notes: 首页列表宽松匹配 /20260615/{hash}/c.html 型文章 URL（likely）；FeedX 挂掉时的兜底与日常网评来源
+
+  - id: studytimes
+    name: Study Times
+    name_zh: 学习时报
+    tier: A
+    category: cn_official
+    lang: zh
+    method: html_scrape
+    url: https://paper.studytimes.cn/
+    parser: studytimes.parse_layout
+    schedule: morning
+    max_items: 15
+    notes: 电子版周一/三/五出报（likely，URL 模板未验证）；干部教育核心刊物
+
+  - id: gov-cn-zhengceku
+    name: gov.cn Policy Library
+    name_zh: 国务院政策文件库
+    tier: A
+    category: cn_official
+    lang: zh
+    method: json_api
+    url: "https://sousuo.www.gov.cn/zcwjk/policyDocumentLibrary?t=zhengcelibrary"
+    parser: gov_cn.parse_policies
+    max_items: 20
+    notes: 政策文件库前端背后 JSON 检索接口（unverified，具体参数待抓包，parser 用 JSON 拾荒器容错）；与 RSSHub zuixin 路由互补
+
+  - id: ccdi-shencha
+    name: CCDI Investigations
+    name_zh: 中央纪委·审查调查
+    tier: A
+    category: cn_official
+    lang: zh
+    method: rsshub
+    url: /gov/ccdi/scdcn
+    max_items: 20
+    notes: RSSHub 通用路由 /gov/ccdi/+路径（文档 confirmed，scdcn=审查调查）；反腐通报是体制风向核心信号
+
+  - id: ccdi-yaowen
+    name: CCDI News
+    name_zh: 中央纪委·要闻
+    category: cn_official
+    lang: zh
+    method: rsshub
+    url: /gov/ccdi/yaowenn
+    max_items: 15
+    notes: 同上通用路由，yaowenn 为站内要闻栏目路径（unverified，CI 探活）
+
+  - id: pbc
+    name: PBoC Monetary Policy
+    name_zh: 中国人民银行·货币政策司
+    tier: A
+    category: cn_official
+    lang: zh
+    method: html_scrape
+    url: http://www.pbc.gov.cn/zhengcehuobisi/
+    parser: cn_ministries.parse_list
+    enabled: false
+    notes: 确认有 wzws JS 挑战 WAF（confirmed），requests 裸抓必败；待 Playwright/headless 方案（参考 PbcCrawler），数据面先用 akshare 兜底
+
+  - id: csrc
+    name: CSRC News
+    name_zh: 证监会·新闻发布
+    tier: A
+    category: cn_official
+    lang: zh
+    method: html_scrape
+    url: https://www.csrc.gov.cn/csrc/xwfb/index.shtml
+    parser: cn_ministries.parse_list
+    max_items: 15
+    notes: 静态 shtml 列表页（confirmed），常规 UA 可抓，全文可得
+
+  - id: mof
+    name: Ministry of Finance
+    name_zh: 财政部·政务信息
+    category: cn_official
+    lang: zh
+    method: html_scrape
+    url: https://www.mof.gov.cn/zhengwuxinxi/
+    parser: cn_ministries.parse_list
+    max_items: 15
+    notes: 政务信息列表页静态 HTML（likely）；附件多为 PDF——已知坑
+
+  - id: ndrc
+    name: NDRC Policy Releases
+    name_zh: 发改委·政策发布
+    category: cn_official
+    lang: zh
+    method: html_scrape
+    url: https://www.ndrc.gov.cn/xxgk/zcfb/
+    parser: cn_ministries.parse_list
+    max_items: 15
+    notes: 政策发布列表页（likely）；标准列表+详情两级抓取
+
+  - id: stats
+    name: NBS Releases
+    name_zh: 国家统计局·最新发布
+    tier: A
+    category: cn_official
+    lang: zh
+    method: html_scrape
+    url: https://www.stats.gov.cn/sj/zxfb/
+    parser: cn_ministries.parse_list
+    max_items: 15
+    notes: 新闻稿/解读列表页（confirmed）；数据本体走 akshare/easyquery，不在本管道
+
+  - id: safe
+    name: SAFE News
+    name_zh: 外汇局·新闻发布
+    category: cn_official
+    lang: zh
+    method: html_scrape
+    url: https://www.safe.gov.cn/safe/xwfb/index.html
+    parser: cn_ministries.parse_list
+    max_items: 15
+    notes: 列表页可抓（unverified）；同为金融监管系统站点，可能有与 pbc 同款 WAF——CI 先试 requests
+
+  # ════════════ 中文财经补充（cn_media / squawk） ════════════
+
+  - id: cls-telegraph
+    name: CLS Telegraph
+    name_zh: 财联社·电报
+    tier: A
+    category: squawk
+    lang: zh
+    method: rsshub
+    url: /cls/telegraph
+    max_items: 30
+    notes: 快讯电报；官方接口需签名，走 RSSHub /cls/telegraph 路由（文档 confirmed）不自行实现签名
+
+  - id: wallstreetcn-lives
+    name: WallStreetCN 7x24
+    name_zh: 华尔街见闻·7×24 快讯
+    tier: A
+    category: squawk
+    lang: zh
+    method: json_api
+    url: "https://api-one.wallstcn.com/apiv1/content/lives?channel=global-channel&limit=30"
+    parser: wallstreetcn.parse_lives
+    max_items: 30
+    notes: 公开 JSON API（confirmed，RSSHub 同源）；7×24 快讯流
+
+  # ════════════ 英文中国研究（newsletter / thinktank） ════════════
+  # Sinocism 等付费刊 feed 只出免费文全文+付费文预览——标题层价值仍高
+
+  - id: sinocism
+    name: Sinocism
+    name_zh: Sinocism（Bill Bishop）
+    tier: A
+    category: newsletter
+    lang: en
+    method: rss
+    url: https://sinocism.com/feed
+    max_items: 10
+    notes: Substack 自定义域 /feed（likely）；付费为主，feed 为预览；英文中国政治日报 No.1
+
+  - id: pekingnology
+    name: Pekingnology
+    name_zh: Pekingnology（王子琛）
+    tier: A
+    category: newsletter
+    lang: en
+    method: rss
+    url: https://www.pekingnology.com/feed
+    max_items: 10
+    notes: Substack（likely，备选 pekingnology.substack.com/feed）；免费全文，翻译中文政策文件
+
+  - id: sinification
+    name: Sinification
+    name_zh: Sinification
+    category: newsletter
+    lang: en
+    method: rss
+    url: https://www.sinification.com/feed
+    max_items: 10
+    notes: Substack（likely）；翻译中国学者文章，免费全文
+
+  - id: chinatalk
+    name: ChinaTalk
+    name_zh: ChinaTalk
+    tier: A
+    category: newsletter
+    lang: en
+    method: rss
+    url: https://www.chinatalk.media/feed
+    max_items: 10
+    notes: Substack 自定义域（likely）；中美科技/AI/出口管制，含播客，免费+付费混合
+
+  - id: wirechina-gnews
+    name: The Wire China (Google News)
+    name_zh: The Wire China
+    category: thinktank
+    lang: en
+    method: google_news
+    url: "site:thewirechina.com when:7d"
+    max_items: 8
+    schedule: morning
+    notes: 正文付费墙（confirmed），Google News 标题层兜底
+
+  - id: chinafile-gnews
+    name: ChinaFile (Google News)
+    name_zh: ChinaFile 中参馆
+    category: thinktank
+    lang: en
+    method: google_news
+    url: "site:chinafile.com when:7d"
+    max_items: 8
+    schedule: morning
+    notes: 官方 RSS 未核实 → Google News 兜底；免费全文站
+
+  - id: clm-hoover
+    name: China Leadership Monitor
+    name_zh: 中国领导层观察（Hoover）
+    category: thinktank
+    lang: en
+    method: google_news
+    url: "site:prcleader.org when:30d"
+    max_items: 6
+    schedule: weekly
+    notes: 季刊（confirmed 免费）；无稳定 feed → Google News 兜底
+
+  - id: trivium-china
+    name: Trivium China
+    name_zh: Trivium China
+    category: newsletter
+    lang: en
+    method: rss
+    url: https://triviumchina.com/feed/
+    enabled: false
+    notes: 免费产品仅邮件投递（confirmed）；此 feed 仅站上偶发文章。待邮箱+IMAP 方案再启用
+
+  # ════════════ Newsletter（Substack/博客，英文投研） ════════════
+  # Substack 统一 /feed；免费文全文、付费文预览（标题仍有信号价值）
+
+  - id: the-diff
+    name: The Diff
+    name_zh: The Diff（Byrne Hobart）
+    category: newsletter
+    lang: en
+    method: rss
+    url: https://www.thediff.co/feed
+    max_items: 8
+    notes: Substack（likely）；付费为主 feed 出预览；金融×科技交叉分析
+
+  - id: net-interest
+    name: Net Interest
+    name_zh: Net Interest（Marc Rubinstein）
+    category: newsletter
+    lang: en
+    method: rss
+    url: https://www.netinterest.co/feed
+    max_items: 6
+    schedule: morning
+    notes: Substack（likely）；银行/资管深度，周更免费文全文
+
+  - id: chartbook
+    name: Chartbook
+    name_zh: Chartbook（Adam Tooze）
+    tier: A
+    category: newsletter
+    lang: en
+    method: rss
+    url: https://adamtooze.substack.com/feed
+    max_items: 8
+    notes: Substack 原生域（confirmed 模式）；宏观+经济史，多数免费全文
+
+  - id: noahpinion
+    name: Noahpinion
+    name_zh: Noahpinion（Noah Smith）
+    category: newsletter
+    lang: en
+    method: rss
+    url: https://www.noahpinion.blog/feed
+    max_items: 8
+    notes: Substack 自定义域（likely）；应用经济学+东亚，免费文多
+
+  - id: apricitas
+    name: Apricitas Economics
+    name_zh: Apricitas（Joseph Politano）
+    category: newsletter
+    lang: en
+    method: rss
+    url: https://www.apricitas.io/feed
+    max_items: 6
+    notes: Substack（likely）；FRED/BLS 数据讲美国宏观，基本免费全文
+
+  - id: astral-codex-ten
+    name: Astral Codex Ten
+    name_zh: Astral Codex Ten
+    category: newsletter
+    lang: en
+    method: rss
+    url: https://www.astralcodexten.com/feed
+    max_items: 5
+    schedule: morning
+    notes: Substack（likely）；思维训练类，免费为主
+
+  - id: bits-about-money
+    name: Bits about Money
+    name_zh: Bits about Money（Patrick McKenzie）
+    category: newsletter
+    lang: en
+    method: rss
+    url: https://www.bitsaboutmoney.com/rss/
+    max_items: 5
+    schedule: morning
+    notes: Ghost 站标准 /rss/（likely）；支付/银行/合规内部视角，免费全文
+
+  - id: marginal-revolution
+    name: Marginal Revolution
+    name_zh: 边际革命（Tyler Cowen）
+    tier: A
+    category: newsletter
+    lang: en
+    method: rss
+    url: https://marginalrevolution.com/feed
+    max_items: 12
+    notes: WordPress 全文 RSS（confirmed）；日更多帖，经济学界高信号博客
+
+  - id: concoda
+    name: Concoda
+    name_zh: Concoda
+    category: newsletter
+    lang: en
+    method: rss
+    url: https://www.concoda.com/feed
+    max_items: 5
+    schedule: morning
+    notes: Substack（likely）；美元/repo 市场微观结构
+
+  - id: macro-compass
+    name: The Macro Compass
+    name_zh: The Macro Compass（Alf Peccatiello）
+    category: newsletter
+    lang: en
+    method: rss
+    url: https://themacrocompass.substack.com/feed
+    max_items: 5
+    schedule: morning
+    notes: Substack 原生域（confirmed 活跃）；付费为主，feed 出预览
+
+  - id: import-ai
+    name: Import AI
+    name_zh: Import AI（Jack Clark）
+    category: newsletter
+    lang: en
+    method: rss
+    url: https://importai.substack.com/feed
+    max_items: 5
+    schedule: morning
+    notes: Substack（likely）；AI policy/safety 周报，免费全文
+
+  - id: one-useful-thing
+    name: One Useful Thing
+    name_zh: One Useful Thing（Ethan Mollick）
+    category: newsletter
+    lang: en
+    method: rss
+    url: https://www.oneusefulthing.org/feed
+    max_items: 5
+    schedule: morning
+    notes: Substack（likely）；AI 应用，免费全文
+
+  - id: latent-space
+    name: Latent Space
+    name_zh: Latent Space（swyx）
+    category: newsletter
+    lang: en
+    method: rss
+    url: https://www.latent.space/feed
+    max_items: 5
+    schedule: morning
+    notes: Substack（likely）；AI 工程实践，含播客，免费为主
+
+  - id: stratechery
+    name: Stratechery
+    name_zh: Stratechery（Ben Thompson）
+    category: newsletter
+    lang: en
+    method: rss
+    url: https://stratechery.com/feed/
+    max_items: 5
+    schedule: morning
+    notes: 公共 WordPress feed 含免费周文全文（likely）；付费日更需订阅者 Passport feed（可日后放 Secret）
+
+  - id: money-stuff
+    name: Money Stuff
+    name_zh: Money Stuff（Matt Levine）
+    category: newsletter
+    lang: en
+    method: rss
+    url: https://newsletterhunt.com/newsletters/money-stuff-by-matt-levine
+    enabled: false
+    notes: 邮件免费但 Bloomberg 网页存档付费；NewsletterHunt 镜像 feed 待核实（unverified）——启用前先人工确认；标题层已由 bloomberg-opinion 覆盖
+
+  # ════════════ 学术（academic） ════════════
+
+  - id: arxiv-cslg
+    name: arXiv cs.LG
+    name_zh: arXiv·机器学习
+    category: academic
+    lang: en
+    method: rss
+    url: https://rss.arxiv.org/rss/cs.LG
+    schedule: morning
+    max_items: 15
+    notes: 官方 RSS（confirmed）；量大，仅取头部；AI/ML 前沿
+
+  - id: voxeu
+    name: VoxEU
+    name_zh: VoxEU（CEPR）
+    category: academic
+    lang: en
+    method: rss
+    url: https://cepr.org/rss/vox-content
+    schedule: morning
+    max_items: 10
+    notes: CEPR 政策评论 feed（likely）；顶级经济学家专栏，免费全文
+
+  - id: liberty-street
+    name: Liberty Street Economics
+    name_zh: 纽约联储·自由街经济
+    category: academic
+    lang: en
+    method: rss
+    url: https://libertystreeteconomics.newyorkfed.org/feed/
+    schedule: morning
+    max_items: 6
+    notes: 纽联储研究博客，WordPress /feed/（likely）；免费全文
+
+  - id: bank-underground
+    name: Bank Underground
+    name_zh: 英央行·Bank Underground
+    category: academic
+    lang: en
+    method: rss
+    url: https://bankunderground.co.uk/feed/
+    schedule: morning
+    max_items: 5
+    notes: 英格兰银行研究员博客（likely）；免费全文
+
+  - id: feds-notes
+    name: FEDS Notes
+    name_zh: 美联储·FEDS Notes
+    category: academic
+    lang: en
+    method: rss
+    url: https://www.federalreserve.gov/feeds/feds_notes.xml
+    schedule: morning
+    max_items: 5
+    notes: 联储研究短文 feed（unverified，feeds 索引页确认存在系列 feed）
+
+  - id: bis-papers
+    name: BIS Working Papers
+    name_zh: 国际清算银行·论文
+    category: academic
+    lang: en
+    method: rss
+    url: https://www.bis.org/doclist/wppubls.rss
+    schedule: morning
+    max_items: 6
+    notes: BIS 论文列表 feed（unverified，BIS 有官方 feed 索引）；研究质量最高的国际机构
+
+  - id: ssrn-fin
+    name: SSRN Financial Economics
+    name_zh: SSRN·金融经济学
+    category: academic
+    lang: en
+    method: rss
+    url: ""
+    enabled: false
+    notes: SSRN 按 network 的 RSS 现状不明（unverified）；待人工确认 feed URL 后启用
+
+  - id: voxchina
+    name: VoxChina (Google News)
+    name_zh: VoxChina
+    category: academic
+    lang: en
+    method: google_news
+    url: "site:voxchina.org when:30d"
+    schedule: weekly
+    max_items: 5
+    notes: 低频学术评论；无稳定 feed → Google News 兜底
+
+  # ════════════ 智库与国际机构（thinktank） ════════════
+
+  - id: piie
+    name: PIIE
+    name_zh: 彼得森国际经济研究所
+    tier: A
+    category: thinktank
+    lang: en
+    method: rss
+    url: https://www.piie.com/rss/update.xml
+    schedule: morning
+    max_items: 8
+    notes: 官方 feed（likely）；国际经济政策第一智库，免费全文
+
+  - id: brookings
+    name: Brookings
+    name_zh: 布鲁金斯学会
+    category: thinktank
+    lang: en
+    method: rss
+    url: https://www.brookings.edu/feed/
+    schedule: morning
+    max_items: 8
+    notes: WordPress /feed/（likely）；量大，AI 分级消化
+
+  - id: csis
+    name: CSIS
+    name_zh: 战略与国际研究中心
+    category: thinktank
+    lang: en
+    method: rss
+    url: https://www.csis.org/analysis/feed
+    schedule: morning
+    max_items: 8
+    notes: 官方 rss-feeds 索引页确认有分栏 feed（具体路径 unverified，CI 探活）
+
+  - id: cfr-gnews
+    name: CFR (Google News)
+    name_zh: 外交关系委员会
+    category: thinktank
+    lang: en
+    method: google_news
+    url: "site:cfr.org when:7d"
+    schedule: morning
+    max_items: 6
+    notes: 官方分博客 feed 较散 → Google News 兜底
+
+  - id: chatham-house-gnews
+    name: Chatham House (Google News)
+    name_zh: 查塔姆研究所
+    category: thinktank
+    lang: en
+    method: google_news
+    url: "site:chathamhouse.org when:7d"
+    schedule: weekly
+    max_items: 5
+    notes: 官方 RSS 索引页存在但路径未核实 → 先 Google News
+
+  - id: rhodium
+    name: Rhodium Group
+    name_zh: 荣鼎咨询
+    tier: A
+    category: thinktank
+    lang: en
+    method: rss
+    url: https://rhg.com/feed/
+    schedule: morning
+    max_items: 5
+    notes: WordPress /feed/（likely）；数据驱动中国经济研究，note 免费深度报告部分收费
+
+  - id: merics
+    name: MERICS
+    name_zh: 墨卡托中国研究所
+    category: thinktank
+    lang: en
+    method: html_scrape
+    url: https://merics.org/en/publications
+    parser: merics.parse_list
+    schedule: weekly
+    max_items: 6
+    notes: 无 RSS（unverified）→ 列表页抓取；欧洲最大中国研究所
+
+  - id: carnegie-china
+    name: Carnegie China
+    name_zh: 卡内基中国中心
+    category: thinktank
+    lang: en
+    method: html_scrape
+    url: https://carnegieendowment.org/china
+    parser: carnegie_china.parse_list
+    schedule: weekly
+    max_items: 6
+    notes: 2024 改版后旧 RSS 失效（unverified）→ 列表页抓取
+
+  - id: cf40
+    name: CF40
+    name_zh: 中国金融四十人论坛
+    tier: A
+    category: thinktank
+    lang: zh
+    method: html_scrape
+    url: https://www.cf40.org.cn/
+    parser: cf40.parse_list
+    max_items: 8
+    notes: 无 RSS（confirmed）；文章 URL 规律 /article/1/{id}，首页列表抓取；政策风向最准的非官方信号源
+
+  - id: imf-news
+    name: IMF News
+    name_zh: 国际货币基金组织
+    category: thinktank
+    lang: en
+    method: rss
+    url: https://www.imf.org/en/news/rss
+    schedule: morning
+    max_items: 8
+    notes: 官方 RSS 索引确认（confirmed）；WEO/GFSR/Article IV 动态
+
+  # ════════════ 央行（central_bank 补充） ════════════
+
+  - id: ecb-press
+    name: ECB Press
+    name_zh: 欧央行·新闻稿
+    tier: A
+    category: central_bank
+    lang: en
+    method: rss
+    url: https://www.ecb.europa.eu/rss/press.xml
+    max_items: 10
+    notes: 官方 feed（confirmed）；全文免费
+
+  - id: boj-whatsnew
+    name: BOJ What's New
+    name_zh: 日本银行·最新发布
+    tier: A
+    category: central_bank
+    lang: en
+    method: rss
+    url: https://www.boj.or.jp/en/rss/whatsnew.xml
+    max_items: 10
+    notes: 官方英文 feed（confirmed）；政策声明/展望报告
+
+  # ════════════ 加密研究（crypto 补充） ════════════
+
+  - id: glassnode-insights
+    name: Glassnode Insights
+    name_zh: Glassnode·链上周报
+    tier: A
+    category: crypto
+    lang: en
+    method: rss
+    url: https://insights.glassnode.com/rss/
+    schedule: morning
+    max_items: 5
+    notes: Ghost 博客 RSS（confirmed）；The Week On-chain 免费全文
+
+  - id: theblock
+    name: The Block
+    name_zh: The Block
+    category: crypto
+    lang: en
+    method: rss
+    url: https://www.theblock.co/rss.xml
+    max_items: 15
+    notes: 官方 feed（confirmed）；新闻免费（feed 为摘要），Research 付费
+
+  - id: arthur-hayes
+    name: Arthur Hayes
+    name_zh: Arthur Hayes 博客
+    tier: A
+    category: crypto
+    lang: en
+    method: rss
+    url: https://cryptohayes.substack.com/feed
+    schedule: morning
+    max_items: 5
+    notes: Substack（confirmed 活跃）；宏观+加密长文，免费全文
+
+  - id: wu-blockchain
+    name: Wu Blockchain
+    name_zh: 吴说区块链（英文版）
+    category: crypto
+    lang: en
+    method: rss
+    url: https://wublockchain.substack.com/feed
+    max_items: 10
+    notes: Substack（likely，子域名待 CI 核实）；亚洲加密新闻密度高
+
+  - id: deribit-insights
+    name: Deribit Insights
+    name_zh: Deribit·期权研究
+    category: crypto
+    lang: en
+    method: rss
+    url: https://insights.deribit.com/feed/
+    schedule: morning
+    max_items: 5
+    notes: WordPress /feed/（likely）；被 Coinbase 收购后更新趋缓，观察
+
+  # ════════════ 播客（podcast） ════════════
+  # url 三种形式：直连 feed URL / iTunes 数字 ID（"id" 或 "id,cn"）/ "search:节目名[,国家]"
+
+  - id: pod-odd-lots
+    name: Odd Lots
+    name_zh: Odd Lots（Bloomberg）
+    tier: A
+    category: podcast
+    lang: en
+    method: podcast_itunes
+    url: https://feeds.bloomberg.fm/BLM2009837477
+    schedule: morning
+    max_items: 4
+    notes: 官方 feed（confirmed）；全球宏观访谈第一
+
+  - id: pod-macro-voices
+    name: MacroVoices
+    name_zh: MacroVoices
+    category: podcast
+    lang: en
+    method: podcast_itunes
+    url: "1079172742"
+    schedule: morning
+    max_items: 3
+    notes: iTunes ID（confirmed）→ Lookup 解析真实 feed
+
+  - id: pod-forward-guidance
+    name: Forward Guidance
+    name_zh: Forward Guidance（Blockworks）
+    category: podcast
+    lang: en
+    method: podcast_itunes
+    url: "search:Forward Guidance Blockworks"
+    schedule: morning
+    max_items: 3
+    notes: iTunes 搜索解析（宏观+加密交叉访谈）
+
+  - id: pod-flirting-models
+    name: Flirting with Models
+    name_zh: Flirting with Models（Corey Hoffstein）
+    category: podcast
+    lang: en
+    method: podcast_itunes
+    url: "search:Flirting with Models"
+    schedule: morning
+    max_items: 3
+    notes: 量化策略深访；季节性更新
+
+  - id: pod-capital-allocators
+    name: Capital Allocators
+    name_zh: Capital Allocators（Ted Seides）
+    category: podcast
+    lang: en
+    method: podcast_itunes
+    url: "search:Capital Allocators"
+    schedule: morning
+    max_items: 3
+    notes: 顶级 LP/GP 访谈
+
+  - id: pod-top-traders
+    name: Top Traders Unplugged
+    name_zh: Top Traders Unplugged
+    category: podcast
+    lang: en
+    method: podcast_itunes
+    url: "search:Top Traders Unplugged"
+    schedule: morning
+    max_items: 3
+    notes: CTA/系统化交易访谈
+
+  - id: pod-invest-like-best
+    name: Invest Like the Best
+    name_zh: Invest Like the Best
+    category: podcast
+    lang: en
+    method: podcast_itunes
+    url: "search:Invest Like the Best"
+    schedule: morning
+    max_items: 3
+    notes: Colossus 网络；顶级投资者访谈
+
+  - id: pod-sinica
+    name: Sinica Podcast
+    name_zh: Sinica（Kaiser Kuo）
+    category: podcast
+    lang: en
+    method: podcast_itunes
+    url: "search:Sinica Podcast"
+    schedule: morning
+    max_items: 3
+    notes: 中国研究老牌播客；已迁 Substack
+
+  - id: pod-acquired
+    name: Acquired
+    name_zh: Acquired
+    category: podcast
+    lang: en
+    method: podcast_itunes
+    url: https://feeds.transistor.fm/acquired
+    schedule: morning
+    max_items: 2
+    notes: Transistor 官方 feed（likely）；商业案例深度
+
+  - id: pod-huzuohuyou
+    name: 忽左忽右
+    name_zh: 忽左忽右
+    category: podcast
+    lang: zh
+    method: podcast_itunes
+    url: "search:忽左忽右,cn"
+    schedule: morning
+    max_items: 3
+    notes: JustPod 出品；历史+国际+人文
+
+  - id: pod-zhangxiaojun
+    name: 张小珺商业访谈录
+    name_zh: 张小珺·商业访谈录
+    category: podcast
+    lang: zh
+    method: podcast_itunes
+    url: "search:张小珺,cn"
+    schedule: morning
+    max_items: 3
+    notes: AI 产业访谈密度高；主发小宇宙，Apple 同步
+
+  - id: pod-shengdongjixi
+    name: 声东击西
+    name_zh: 声东击西
+    category: podcast
+    lang: zh
+    method: podcast_itunes
+    url: https://etw.fm/feed
+    schedule: morning
+    max_items: 3
+    notes: Typlog 直连 feed（likely，失败则改 search:声东击西,cn）
+
+  - id: pod-shangye-jiushi
+    name: 商业就是这样
+    name_zh: 商业就是这样
+    category: podcast
+    lang: zh
+    method: podcast_itunes
+    url: "search:商业就是这样,cn"
+    schedule: morning
+    max_items: 3
+    notes: 商业深度叙事
+
+  # ════════════ X/Twitter 精选账号组（twitter，需 TWITTERAPI_IO_KEY） ════════════
+  # 未配置密钥时整组自动跳过；handles 提炼自用户清单 A5 节
+
+  - id: x-vol-options
+    name: "X: Vol & Options"
+    name_zh: X·美股期权与波动率
+    category: squawk
+    lang: en
+    method: twitter
+    url: ""
+    max_items: 36
+    handles: [SqueezeMetrics, spotgamma, jam_croissant, choffstein, euanjsinclair,
+              bennpeifert, CitrineCap, VolatilityWiz, unusual_whales, therobotjames,
+              WifeyAlpha, MikeKantro]
+    notes: vol/gamma/期权流派核心账号
+
+  - id: x-fx-macro
+    name: "X: FX & Macro"
+    name_zh: X·外汇利率宏观
+    category: squawk
+    lang: en
+    method: twitter
+    url: ""
+    max_items: 48
+    handles: [FedGuy12, INArteCarloDoss, MacroAlfa, RobinBrooksIIF, biancoresearch,
+              LisaAbramowicz1, TheLastBearSta1, SoberLook, AdamMancini4, MacroMicroMe,
+              HKuppy, PauloMacro, AndreasSteno, concodanomics, JeffSnider_AIP,
+              LizAnnSonders, TheStalwart]
+    notes: 外汇/利率/流动性框架账号
+
+  - id: x-crypto
+    name: "X: Crypto"
+    name_zh: X·加密衍生品
+    category: squawk
+    lang: en
+    method: twitter
+    url: ""
+    max_items: 48
+    handles: [GreeksLive, CryptoHayes, CL207, CryptoCobain, AltcoinPsycho, TheBlock__,
+              WuBlockchain, LynAldenContact, nic__carter, _checkmatey_, hsakatrades,
+              CryptoKaleo, PentosUni, AndreCronjeTech, VitalikButerin]
+    notes: 加密衍生品/链上核心账号
+
+  - id: x-metals
+    name: "X: Metals"
+    name_zh: X·贵金属大宗
+    category: squawk
+    lang: en
+    method: twitter
+    url: ""
+    max_items: 30
+    handles: [SantiagoAuFund, LukeGromen, TaviCosta, RonStoeferle, JanGold_,
+              JesseColombo, SchiffGold, DanielMarburger, Goldfinger_, ZH_View_Macro]
+    notes: 黄金/美元体系/大宗周期账号
+
+  - id: x-quant
+    name: "X: Quant"
+    name_zh: X·量化通用
+    category: squawk
+    lang: en
+    method: twitter
+    url: ""
+    max_items: 12
+    handles: [MebFaber, cullenroche, profplum99, RealVisionTV]
+    notes: 量化与市场结构
+
+  - id: x-ai
+    name: "X: AI/ML"
+    name_zh: X·人工智能
+    category: squawk
+    lang: en
+    method: twitter
+    url: ""
+    max_items: 42
+    handles: [karpathy, ylecun, AnthropicAI, OpenAI, GoogleDeepMind, huggingface,
+              _jasonwei, jeremyphoward, hardmaru, sama, AravSrinivas, _philschmid,
+              dotey, op7418]
+    notes: AI/ML 前沿与应用
+
+  - id: x-china
+    name: "X: China Research"
+    name_zh: X·中国研究
+    category: squawk
+    lang: en
+    method: twitter
+    url: ""
+    max_items: 60
+    handles: [niubi, michaelxpettis, brad_setser, LingLing_Wei, chrisbalding, vshih2,
+              CarlMinzner, JKynge, MaryGallagher5, dingding_chen, KaiserKuo,
+              petermartin_pcm, melissakchan, ianjohnson, AndrewBatson, arthur_kroeber,
+              damienics, RushDoshi, DanWBlumenthal, ydsuncherry]
+    notes: 中国政治经济研究者账号
+
+  - id: x-economists
+    name: "X: Economists"
+    name_zh: X·全球经济学家
+    category: squawk
+    lang: en
+    method: twitter
+    url: ""
+    max_items: 21
+    handles: [LHSummers, paulkrugman, TylerCowen, R_Thaler, JustinWolfers,
+              Noahpinion, adam_tooze]
+    notes: 顶级经济学家
+
+  - id: x-squawk
+    name: "X: Squawk"
+    name_zh: X·实时快讯
+    category: squawk
+    lang: en
+    method: twitter
+    url: ""
+    max_items: 50
+    handles: [DeItaone, WalterBloomberg, FirstSquawk, LiveSquawk, disclosetv]
+    notes: 盘中快讯账号（免费替代为 FinancialJuice Telegram）
