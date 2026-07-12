@@ -136,6 +136,7 @@ def cmd_run(args) -> int:
 
     # Stage 6: index/retention ---------------------------------------------
     persist.update_index(dctx)
+    persist.write_watchlist_export()
     persist.apply_retention(
         dctx,
         retention_days=int(settings.get("persist", {}).get("retention_days", 180)),

@@ -113,6 +113,16 @@ def update_failure_counters(results: list[FetchResult]) -> dict[str, int]:
     return counters
 
 
+def write_watchlist_export() -> None:
+    """把 config/watchlist.yaml 导出为 data/watchlist.json 供看板使用。"""
+    import yaml
+
+    from .util import CONFIG_DIR
+
+    doc = yaml.safe_load((CONFIG_DIR / "watchlist.yaml").read_text(encoding="utf-8"))
+    save_json(DATA_DIR / "watchlist.json", {"tickers": doc.get("tickers", [])})
+
+
 def update_index(dctx: DateContext) -> None:
     """重建 index.json（扫描 data/ 下的日期目录）。"""
     dates = sorted(
