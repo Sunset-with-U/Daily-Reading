@@ -8,14 +8,14 @@
 
 | 方式 | 数量 | 说明 |
 |---|---:|---|
-| RSS/Atom | 60 | `rss` |
-| Google News 兜底 | 22 | `google_news` |
-| HTML 爬虫 | 15 | `html_scrape` |
-| 自建 RSSHub | 9 | `rsshub` |
+| RSS/Atom | 59 | `rss` |
+| Google News 兜底 | 27 | `google_news` |
+| HTML 爬虫 | 11 | `html_scrape` |
+| 自建 RSSHub | 10 | `rsshub` |
 | 播客（iTunes 解析） | 9 | `podcast_itunes` |
 | X（twitterapi.io，需密钥） | 9 | `twitter` |
 | 公开 JSON API | 3 | `json_api` |
-| Telegram 公开频道 | 2 | `telegram` |
+| Telegram 公开频道 | 1 | `telegram` |
 
 ## 分类明细
 
@@ -23,7 +23,7 @@
 
 | 源 | 等级 | 班次 | 方式 | 状态 | 备注 |
 |---|---|---|---|---|---|
-| 财联社·电报（`cls-telegraph`） | A·核心 | 早晚 | Telegram 公开频道 | ✅ | RSSHub /cls/telegraph 因 cls.cn 签名接口对海外 IP 返空；改抓财联社官方 TG 频道镜像 |
+| 财联社·电报（`cls-telegraph`） | A·核心 | 早晚 | 自建 RSSHub | ✅ | TG 镜像 @cailianshe 已于 2022-10 停更(探针实测)；RSSHub 路由可用但偶发空返回，健康周报盯梢 |
 | FinancialJuice 快讯（`financialjuice-tg`） | A·核心 | 早晚 | Telegram 公开频道 | ✅ | 与 @DeItaone 同源的实时市场快讯；X 免费替代层 |
 | 华尔街见闻·7×24 快讯（`wallstreetcn-lives`） | A·核心 | 早晚 | 公开 JSON API | ✅ | 公开 JSON API（confirmed，RSSHub 同源）；7×24 快讯流 |
 | X·人工智能（`x-ai`） | B·标准 | 早晚 | X（twitterapi.io，需密钥） | ✅ | 14 账号；AI/ML 前沿与应用 |
@@ -91,14 +91,14 @@
 | 求是（`qstheory-feedx`） | A·核心 | 早晚 | RSS/Atom | ⛔ 停用 | feedx.net 代理 502 不稳定；qstheory-list 爬虫已覆盖求是全文 |
 | 人民日报（`rmrb-paper`） | A·核心 | 早报 | HTML 爬虫 | ✅ | 电子版按版面遍历，全文可得；每日凌晨更新 |
 | 国家统计局·最新发布（`stats`） | A·核心 | 早晚 | HTML 爬虫 | ✅ | 新闻稿/解读列表页（confirmed）；数据本体走 akshare/easyquery，不在本管道 |
-| 学习时报（`studytimes`） | A·核心 | 早报 | HTML 爬虫 | ✅ | 电子版周一/三/五出报（likely，URL 模板未验证）；干部教育核心刊物 |
-| 新华网·财经（`xinhua-fortune`） | A·核心 | 早晚 | HTML 爬虫 | ✅ | 同上，财经频道列表页直抓（likely） |
+| 学习时报（`studytimes`） | A·核心 | 早报 | Google News 兜底 | ✅ | 电子报首页为 JS 跳转壳页(探针实测)，Google News 中文版兜底 |
+| 新华网·财经（`xinhua-fortune`） | A·核心 | 早晚 | Google News 兜底 | ✅ | 财经频道对数据中心 IP 返回测试桩页(探针实测)，Google News 中文版兜底 |
 | 新华网·时政（`xinhua-politics`） | A·核心 | 早晚 | HTML 爬虫 | ✅ | 中文站无可靠官方 RSS（likely）→ 频道列表页直抓，全文可得；重点看权威发布/新华时评 |
 | 央视新闻联播·文字版（`xwlb`） | A·核心 | 晚报 | HTML 爬虫 | ✅ | 每日一页列当天条目（confirmed）；文字稿约 21 点齐全，晚报班次（北京20点）抓当日可能不全——已知坑 |
 | 中央纪委国家监委（`ccdi-gnews`） | B·标准 | 早晚 | Google News 兜底 | ✅ | 官网 WAF 拦截直抓与 RSSHub，Google News 中文版兜底(要闻+审查调查混合) |
 | 中央纪委·要闻（`ccdi-yaowen`） | B·标准 | 早晚 | 自建 RSSHub | ⛔ 停用 | 中纪委 WAF 拦截数据中心 IP(RSSHub 路由名正确但抓空)，由 ccdi-gnews 替代 |
 | 财政部·政务信息（`mof`） | B·标准 | 早晚 | HTML 爬虫 | ✅ | 政务信息列表页静态 HTML（likely）；附件多为 PDF——已知坑 |
-| 发改委·政策发布（`ndrc`） | B·标准 | 早晚 | HTML 爬虫 | ✅ | 政策发布列表页（likely）；标准列表+详情两级抓取 |
+| 发改委·政策发布（`ndrc`） | B·标准 | 早晚 | Google News 兜底 | ✅ | 官网对数据中心 IP 返回 54 字节空壳(探针实测)，Google News 中文版兜底 |
 | 求是网·网评（`qstheory-list`） | B·标准 | 早晚 | HTML 爬虫 | ✅ | 首页列表宽松匹配 /20260615/{hash}/c.html 型文章 URL（likely）；FeedX 挂掉时的兜底与日常网评来源 |
 | 外汇局·新闻发布（`safe`） | B·标准 | 早晚 | HTML 爬虫 | ✅ | 站点改版：新闻栏目由 xwfb 迁至 ywfb(要闻发布) |
 
@@ -129,7 +129,7 @@
 
 | 源 | 等级 | 班次 | 方式 | 状态 | 备注 |
 |---|---|---|---|---|---|
-| 中国金融四十人论坛（`cf40`） | A·核心 | 早晚 | HTML 爬虫 | ✅ | 无 RSS（confirmed）；文章 URL 规律 /article/1/{id}，首页列表抓取；政策风向最准的非官方信号源 |
+| 中国金融四十人论坛（`cf40`） | A·核心 | 早晚 | Google News 兜底 | ✅ | 官网为 JS 渲染 SPA，静态抓取无链接(探针实测)，Google News 中文版兜底 |
 | 彼得森国际经济研究所（`piie`） | A·核心 | 早报 | RSS/Atom | ✅ | 官方 feed（likely）；国际经济政策第一智库，免费全文 |
 | 荣鼎咨询（`rhodium`） | A·核心 | 早报 | RSS/Atom | ✅ | WordPress /feed/（likely）；数据驱动中国经济研究，note 免费深度报告部分收费 |
 | 布鲁金斯学会（`brookings`） | B·标准 | 早报 | RSS/Atom | ✅ | WordPress /feed/（likely）；量大，AI 分级消化 |
@@ -139,7 +139,7 @@
 | ChinaFile 中参馆（`chinafile-gnews`） | B·标准 | 早报 | Google News 兜底 | ✅ | 官方 RSS 未核实 → Google News 兜底；免费全文站 |
 | 中国领导层观察（Hoover）（`clm-hoover`） | B·标准 | 每周 | Google News 兜底 | ✅ | 季刊（confirmed 免费）；无稳定 feed → Google News 兜底 |
 | 战略与国际研究中心（`csis`） | B·标准 | 早报 | Google News 兜底 | ✅ | 官方已不提供公开 RSS(仅邮件订阅)，Google News 兜底 |
-| 国际货币基金组织（`imf-news`） | B·标准 | 早报 | RSS/Atom | ✅ | 官方 RSS 索引确认（confirmed）；WEO/GFSR/Article IV 动态 |
+| 国际货币基金组织（`imf-news`） | B·标准 | 早报 | Google News 兜底 | ✅ | imf.org 整域对数据中心 IP 403(新旧 feed 路径均试过)，Google News 兜底 |
 | 墨卡托中国研究所（`merics`） | B·标准 | 每周 | HTML 爬虫 | ✅ | 无 RSS（unverified）→ 列表页抓取；欧洲最大中国研究所 |
 | The Wire China（`wirechina-gnews`） | B·标准 | 早报 | Google News 兜底 | ✅ | 正文付费墙（confirmed），Google News 标题层兜底 |
 

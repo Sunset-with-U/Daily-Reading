@@ -349,7 +349,7 @@ sources:
     category: cn_media
     lang: en
     method: google_news
-    url: "site:yicaiglobal.com when:2d"
+    url: "site:yicaiglobal.com when:7d"
     max_items: 15
     notes: 未发现 RSS（unverified）→ Google News 兜底；正文免费
 
@@ -503,11 +503,10 @@ sources:
     tier: A
     category: cn_official
     lang: zh
-    method: html_scrape
-    url: https://www.news.cn/fortune/
-    parser: xinhuanet.parse_list
+    method: google_news
+    url: "site:news.cn/fortune when:2d"
     max_items: 20
-    notes: 同上，财经频道列表页直抓（likely）
+    notes: 财经频道对数据中心 IP 返回测试桩页(探针实测)，Google News 中文版兜底
 
   - id: qstheory-feedx
     name: Qiushi (FeedX)
@@ -538,12 +537,11 @@ sources:
     tier: A
     category: cn_official
     lang: zh
-    method: html_scrape
-    url: https://paper.studytimes.cn/
-    parser: studytimes.parse_layout
+    method: google_news
+    url: "site:studytimes.cn when:7d"
     schedule: morning
     max_items: 15
-    notes: 电子版周一/三/五出报（likely，URL 模板未验证）；干部教育核心刊物
+    notes: 电子报首页为 JS 跳转壳页(探针实测)，Google News 中文版兜底
 
   - id: gov-cn-zhengceku
     name: gov.cn Policy Library
@@ -630,11 +628,10 @@ sources:
     name_zh: 发改委·政策发布
     category: cn_official
     lang: zh
-    method: html_scrape
-    url: https://www.ndrc.gov.cn/xxgk/zcfb/
-    parser: cn_ministries.parse_list
+    method: google_news
+    url: "site:ndrc.gov.cn when:2d"
     max_items: 15
-    notes: 政策发布列表页（likely）；标准列表+详情两级抓取
+    notes: 官网对数据中心 IP 返回 54 字节空壳(探针实测)，Google News 中文版兜底
 
   - id: stats
     name: NBS Releases
@@ -667,10 +664,10 @@ sources:
     tier: A
     category: squawk
     lang: zh
-    method: telegram
-    url: https://t.me/s/cailianshe
+    method: rsshub
+    url: /cls/telegraph
     max_items: 30
-    notes: RSSHub /cls/telegraph 因 cls.cn 签名接口对海外 IP 返空；改抓财联社官方 TG 频道镜像
+    notes: TG 镜像 @cailianshe 已于 2022-10 停更(探针实测)；RSSHub 路由可用但偶发空返回，健康周报盯梢
 
   - id: wallstreetcn-lives
     name: WallStreetCN 7x24
@@ -1136,24 +1133,21 @@ sources:
     tier: A
     category: thinktank
     lang: zh
-    method: html_scrape
-    url: https://www.cf40.org.cn/
-    parser: cf40.parse_list
+    method: google_news
+    url: "site:cf40.org.cn when:7d"
     max_items: 8
-    notes: 无 RSS（confirmed）；文章 URL 规律 /article/1/{id}，首页列表抓取；政策风向最准的非官方信号源
+    notes: 官网为 JS 渲染 SPA，静态抓取无链接(探针实测)，Google News 中文版兜底
 
   - id: imf-news
     name: IMF News
     name_zh: 国际货币基金组织
     category: thinktank
     lang: en
-    method: rss
-    url: "https://www.imf.org/en/rss-list/feed?category=WHATSNEW"
-    fallback_urls:
-      - "https://www.imf.org/external/rss/feeds.aspx?category=WHATSNEW"
+    method: google_news
+    url: "site:imf.org when:2d"
     schedule: morning
     max_items: 8
-    notes: 官方 RSS 索引确认（confirmed）；WEO/GFSR/Article IV 动态
+    notes: imf.org 整域对数据中心 IP 403(新旧 feed 路径均试过)，Google News 兜底
 
   # ════════════ 央行（central_bank 补充） ════════════
 
