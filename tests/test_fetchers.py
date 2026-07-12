@@ -14,6 +14,19 @@ def test_rss_parse(fixture_response, make_ctx, make_source):
     assert first.published_at.startswith("2026-07-10")
 
 
+def test_rss_podcast_item_without_link(make_ctx, make_source):
+    """Megaphone 等播客 feed 条目无 <link>，应回退 enclosure URL。"""
+    feed = b"""<?xml version="1.0"?><rss version="2.0"><channel><title>FG</title>
+    <item><title>The Fed Put Is Back | Joseph Wang</title>
+      <guid isPermaLink="false">mega-uuid-123</guid>
+      <enclosure url="https://traffic.megaphone.fm/FG123.mp3" type="audio/mpeg"/>
+    </item></channel></rss>"""
+    items = parse_feed_bytes(feed, make_source(), make_ctx())
+    assert len(items) == 1
+    assert items[0].url == "https://traffic.megaphone.fm/FG123.mp3"
+    assert items[0].guid == "mega-uuid-123"
+
+
 def test_rss_fallback_urls(monkeypatch, make_ctx, make_source, fixture_response):
     """主 URL 404 时依次尝试 fallback_urls；主 URL 合法空 feed 不被兜底失败掩盖。"""
     import httpx

@@ -629,7 +629,7 @@ sources:
     category: cn_official
     lang: zh
     method: google_news
-    url: "site:ndrc.gov.cn when:2d"
+    url: "site:ndrc.gov.cn when:7d"
     max_items: 15
     notes: 官网对数据中心 IP 返回 54 字节空壳(探针实测)，Google News 中文版兜底
 

@@ -34,7 +34,12 @@ def parse_feed_bytes(content: bytes, src: SourceConfig, ctx: FetchContext) -> li
     items: list[RawItem] = []
     for entry in entries[: src.max_items]:
         title = squeeze_text(entry.title)
+        # 播客类 feed（如 Megaphone）条目常无 <link>，回退 enclosure/guid URL
         link = entry.link.strip()
+        if not link and entry.enclosures:
+            link = entry.enclosures[0]
+        if not link and entry.guid.startswith("http"):
+            link = entry.guid
         if not title or not link:
             continue
         content_html = entry.content_html or entry.summary_html
