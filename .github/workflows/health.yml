@@ -1,0 +1,97 @@
+name: source-health
+
+on:
+  schedule:
+    - cron: "0 3 * * 1"    # 周一 北京 11:00 全量源探活
+  workflow_dispatch: {}
+
+concurrency:
+  group: data-writer        # 与 daily.yml 共享，串行化 git push
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    services:
+      rsshub:
+        image: diygod/rsshub:chromium-bundled
+        ports:
+          - 1200:1200
+        env:
+          NODE_ENV: production
+          CACHE_TYPE: memory
+          ALLOW_LOCALHOST: "true"
+    env:
+      RSSHUB_BASE: http://localhost:1200
+      TWITTERAPI_IO_KEY: ${{ secrets.TWITTERAPI_IO_KEY }}
+      PYTHONUNBUFFERED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: 等待 RSSHub 就绪
+        run: |
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:1200/healthz && exit 0
+            sleep 2
+          done
+          echo "::warning::RSSHub 未就绪"
+      - name: 全量源探活
+        run: python -m pipeline.cli health --verbose | tee health.log
+      - name: 上传探活日志
+        uses: actions/upload-artifact@v4
+        with:
+          name: health-log
+          path: health.log
+          retention-days: 30
+      - name: 提交健康数据
+        run: |
+          git config user.name "daily-reading-bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add data/health/ data/state/ || true
+          git diff --cached --quiet && exit 0
+          git commit -m "data: 源健康周报 $(date -u +%F) [skip ci]"
+          for i in 1 2 3; do
+            git pull --rebase origin "${{ github.ref_name }}" && git push origin "HEAD:${{ github.ref_name }}" && exit 0
+            sleep 15
+          done
+          exit 1
+      - name: 更新「源健康周报」Issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python - <<'EOF'
+          import json, subprocess
+          report = json.load(open("data/health/latest.json"))
+          bad = [s for s in report["sources"] if s["status"] == "error"]
+          chronic = [s for s in bad if s.get("consecutive_failures", 0) >= 3]
+          lines = [
+              f"探活时间：{report['run_at']}",
+              f"总计 {report['total']} 源：✅ {report['ok']} 正常 · ▫️ {report['empty']} 空返回 · ❌ {report['error']} 失败",
+              "",
+          ]
+          if chronic:
+              lines.append("### ⚠️ 连续多次失败（建议在 sources.yaml 中禁用或更换接入方式）")
+              lines += [f"- `{s['id']}`（连败 {s['consecutive_failures']} 次）：{s['error'][:120]}" for s in chronic]
+              lines.append("")
+          if bad:
+              lines.append("<details><summary>全部失败源</summary>\n")
+              lines += [f"- `{s['id']}`：{s['error'][:120]}" for s in bad]
+              lines.append("\n</details>")
+          open("issue_body.md", "w").write("\n".join(lines))
+          EOF
+          TITLE="源健康周报"
+          NUM=$(gh issue list --state open --search "$TITLE in:title" --json number --jq '.[0].number' || true)
+          if [ -n "$NUM" ] && [ "$NUM" != "null" ]; then
+            gh issue edit "$NUM" --body-file issue_body.md
+          else
+            gh issue create --title "$TITLE" --body-file issue_body.md
+          fi

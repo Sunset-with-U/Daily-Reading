@@ -94,12 +94,20 @@ jobs:
         run: python -m pipeline.cli collect-pending
 
       - name: 运行管线
+        env:
+          HEAD_MSG: ${{ github.event.head_commit.message }}
         run: |
           ARGS=""
-          # push 事件（开发分支迭代）固定跑安全的试点测试组
+          # push 事件（开发分支迭代）默认跑安全的试点测试组；
+          # 提交信息带 [ci-full] 时改跑全量抓取探活（仍不触发 AI）。
           if [ "${{ github.event_name }}" = "push" ]; then
-            # 固定早报班次，让 arxiv/人民日报等 morning 源也纳入覆盖
-            ARGS="--mode test --edition morning --source-filter pilot --skip-ai --skip-market --verbose"
+            case "$HEAD_MSG" in
+              *"[ci-full]"*)
+                ARGS="--mode full --edition morning --skip-ai --verbose" ;;
+              *)
+                # 固定早报班次，让 arxiv/人民日报等 morning 源也纳入覆盖
+                ARGS="--mode test --edition morning --source-filter pilot --skip-ai --skip-market --verbose" ;;
+            esac
             echo "python -m pipeline.cli run $ARGS"
             python -m pipeline.cli run $ARGS
             exit 0
