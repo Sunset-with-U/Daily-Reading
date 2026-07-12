@@ -68,6 +68,10 @@ def write_market(dctx: DateContext, snapshot: dict) -> None:
     save_json(day_dir(dctx.date_bj) / "market.json", snapshot)
 
 
+def load_market(date_bj: str) -> dict | None:
+    return load_json(day_dir(date_bj) / "market.json", None)
+
+
 def write_report(dctx: DateContext, report: dict) -> None:
     path = day_dir(dctx.date_bj) / "report.json"
     doc = load_json(path, None) or {"date": dctx.date_bj, "editions": {}}

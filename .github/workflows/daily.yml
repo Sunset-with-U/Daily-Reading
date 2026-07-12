@@ -98,7 +98,8 @@ jobs:
           ARGS=""
           # push 事件（开发分支迭代）固定跑安全的试点测试组
           if [ "${{ github.event_name }}" = "push" ]; then
-            ARGS="--mode test --source-filter pilot --skip-ai --skip-market --verbose"
+            # 固定早报班次，让 arxiv/人民日报等 morning 源也纳入覆盖
+            ARGS="--mode test --edition morning --source-filter pilot --skip-ai --skip-market --verbose"
             echo "python -m pipeline.cli run $ARGS"
             python -m pipeline.cli run $ARGS
             exit 0
