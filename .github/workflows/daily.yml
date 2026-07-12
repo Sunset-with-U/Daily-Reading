@@ -4,6 +4,12 @@ on:
   schedule:
     - cron: "0 23 * * *"   # 北京 07:00 → 早报（cron 仅在默认分支生效）
     - cron: "0 12 * * *"   # 北京 20:00 → 晚报
+  # 开发期触发器：workflow_dispatch 需要文件进默认分支后才可用，
+  # push 触发不受此限制；数据提交带 [skip ci] + paths-ignore 双保险防循环。
+  # 合并进 main 后此触发器随开发分支消失，无需清理。
+  push:
+    branches: ["claude/daily-reading-dashboard-d8ztqu"]
+    paths-ignore: ["data/**"]
   workflow_dispatch:
     inputs:
       mode:
@@ -90,6 +96,13 @@ jobs:
       - name: 运行管线
         run: |
           ARGS=""
+          # push 事件（开发分支迭代）固定跑安全的试点测试组
+          if [ "${{ github.event_name }}" = "push" ]; then
+            ARGS="--mode test --source-filter pilot --skip-ai --skip-market --verbose"
+            echo "python -m pipeline.cli run $ARGS"
+            python -m pipeline.cli run $ARGS
+            exit 0
+          fi
           if [ "${{ inputs.mode }}" = "test" ]; then ARGS="$ARGS --mode test"; fi
           if [ -n "${{ inputs.source_filter }}" ]; then ARGS="$ARGS --source-filter ${{ inputs.source_filter }}"; fi
           if [ -n "${{ inputs.max_items }}" ]; then ARGS="$ARGS --max-items ${{ inputs.max_items }}"; fi
@@ -110,7 +123,7 @@ jobs:
             echo "无数据变更"
             exit 0
           fi
-          git commit -m "data: $(date -u '+%Y-%m-%d %H:%M') UTC 运行产出"
+          git commit -m "data: $(date -u '+%Y-%m-%d %H:%M') UTC 运行产出 [skip ci]"
           for i in 1 2 3; do
             git pull --rebase origin "${{ github.ref_name }}" && git push origin "HEAD:${{ github.ref_name }}" && exit 0
             echo "push 失败，${i} 次重试…"; sleep 15
