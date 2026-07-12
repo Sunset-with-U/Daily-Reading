@@ -1,0 +1,24 @@
+# 临时探针清单：CI 日志回看真实页面结构，修完解析器后删除本文件
+- name: csrc-xwfb
+  url: https://www.csrc.gov.cn/csrc/xwfb/index.shtml
+- name: ndrc-zcfb
+  url: https://www.ndrc.gov.cn/xxgk/zcfb/
+- name: cf40-home
+  url: https://www.cf40.org.cn/
+- name: studytimes-paper
+  url: https://paper.studytimes.cn/
+- name: xinhua-fortune
+  url: https://www.news.cn/fortune/
+- name: safe-ywfb-new
+  url: https://www.safe.gov.cn/safe/ywfb/index.html
+- name: gov-searchgov-data
+  url: "https://sousuo.www.gov.cn/search-gov/data?t=zhengcelibrary_gw_bm_gb&q=&timetype=timeqb&sort=pubtime&sortType=1&searchfield=title&p=1&n=20&type=gwyzcwjk"
+  mode: json
+  headers:
+    Referer: "https://www.gov.cn/zhengce/zhengceku/"
+    Accept: "application/json, text/plain, */*"
+- name: cailianshe-tg
+  url: https://t.me/s/cailianshe
+- name: cls-telegraph-rsshub-body
+  url: http://localhost:1200/cls/telegraph
+  mode: raw

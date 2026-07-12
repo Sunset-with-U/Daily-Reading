@@ -90,6 +90,10 @@ jobs:
           done
           echo "::warning::RSSHub 未就绪，rsshub 方法的源将失败（不阻塞其他源）"
 
+      - name: 调试探针（仅当 config/debug_probe.yaml 存在）
+        if: github.event_name == 'push'
+        run: python scripts/debug_probe.py
+
       - name: 回收上一轮未完成的 AI Batch
         run: python -m pipeline.cli collect-pending
 

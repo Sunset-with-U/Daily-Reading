@@ -8,6 +8,7 @@ url 字段三种形式：
 """
 from __future__ import annotations
 
+import threading
 from urllib.parse import quote
 
 from ..models import FetchContext, FetchResult, SourceConfig
@@ -19,6 +20,8 @@ _LOOKUP = "https://itunes.apple.com/lookup?id={id}&country={country}"
 _SEARCH = ("https://itunes.apple.com/search?term={term}&media=podcast"
            "&limit=1&country={country}")
 _CACHE_FILE = STATE_DIR / "podcast_feeds.json"
+# 播客源在线程池中并发解析，缓存读改写必须互斥，否则后写者覆盖先写者
+_cache_lock = threading.Lock()
 
 
 def fetch(src: SourceConfig, ctx: FetchContext) -> FetchResult:
@@ -31,9 +34,10 @@ def fetch(src: SourceConfig, ctx: FetchContext) -> FetchResult:
 def _resolve_feed_url(src: SourceConfig) -> str:
     if src.url.startswith("http"):
         return src.url
-    cache = load_json(_CACHE_FILE, {}) or {}
-    if src.id in cache:
-        return cache[src.id]
+    with _cache_lock:
+        cache = load_json(_CACHE_FILE, {}) or {}
+        if src.id in cache:
+            return cache[src.id]
 
     if src.url.startswith("search:"):
         raw = src.url[len("search:"):]
@@ -48,8 +52,10 @@ def _resolve_feed_url(src: SourceConfig) -> str:
     if not results or not results[0].get("feedUrl"):
         raise ValueError(f"iTunes 未解析出 feedUrl（{src.url}）")
     feed_url = results[0]["feedUrl"]
-    cache[src.id] = feed_url
-    save_json(_CACHE_FILE, cache)
+    with _cache_lock:
+        cache = load_json(_CACHE_FILE, {}) or {}
+        cache[src.id] = feed_url
+        save_json(_CACHE_FILE, cache)
     return feed_url
 
 

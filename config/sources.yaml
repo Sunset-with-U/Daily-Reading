@@ -70,14 +70,11 @@ sources:
     tier: A
     category: academic
     lang: en
-    method: rss
-    url: https://back.nber.org/rss/new.xml
-    fallback_urls:
-      - https://www.nber.org/rss/new.xml
-      - https://data.nber.org/rss/new.xml
+    method: google_news
+    url: "site:nber.org when:7d"
     schedule: morning
     test_group: pilot
-    notes: 主站对数据中心 IP 返回 403，back.nber.org 为官方后端镜像
+    notes: NBER 全域(含镜像)对数据中心 IP 403，改 Google News 兜底
 
   - id: fed-press
     name: Federal Reserve Press
@@ -106,13 +103,11 @@ sources:
     tier: B
     category: crypto
     lang: en
-    method: rss
-    url: https://www.paradigm.xyz/feed.xml
-    fallback_urls:
-      - https://www.paradigm.xyz/rss.xml
-      - https://www.paradigm.xyz/api/rss
+    method: google_news
+    url: "site:paradigm.xyz when:1m"
     schedule: morning
     test_group: pilot
+    notes: 官网改版后 RSS 全部下线(2026-07 实测)，发文月频，Google News 兜底
 
   - id: financialjuice-tg
     name: FinancialJuice (Telegram)
@@ -324,10 +319,10 @@ sources:
     tier: A
     category: cn_media
     lang: zh
-    method: rss
-    url: https://gateway.caixin.com/api/data/global/feedlyRss.xml
+    method: rsshub
+    url: /caixin/latest
     max_items: 15
-    notes: 官方 Feedly 向 feed（confirmed 但更新稀疏）；标题层，付费墙严；备选 RSSHub caixin 路由/Telegram @caixin_web
+    notes: 官方 feedlyRss 接口 406；RSSHub /caixin/latest 文档确认可用
 
   - id: caixin-global
     name: Caixin Global (Google News)
@@ -335,7 +330,7 @@ sources:
     category: cn_media
     lang: en
     method: google_news
-    url: "site:caixinglobal.com when:1d"
+    url: "site:caixinglobal.com when:2d"
     max_items: 15
     notes: 无官方 RSS（RSSHub issue #10999 仍开着，likely）→ Google News 兜底；标题层
 
@@ -354,7 +349,7 @@ sources:
     category: cn_media
     lang: en
     method: google_news
-    url: "site:yicaiglobal.com when:1d"
+    url: "site:yicaiglobal.com when:2d"
     max_items: 15
     notes: 未发现 RSS（unverified）→ Google News 兜底；正文免费
 
@@ -436,10 +431,10 @@ sources:
     tier: C
     category: cn_media
     lang: zh
-    method: rss
-    url: https://www.huxiu.com/rss/0.xml
+    method: rsshub
+    url: /huxiu/article
     max_items: 15
-    notes: 官方 rss/0.xml 历史存在（unverified，CI 探活）；失效则换 RSSHub /huxiu 路由
+    notes: 官方 rss/0.xml 长期 502；RSSHub /huxiu/article 兜底
 
   - id: latepost
     name: LatePost
@@ -523,7 +518,8 @@ sources:
     method: rss
     url: https://feedx.net/rss/qiushi.xml
     max_items: 10
-    notes: 半月刊；FeedX 第三方全文源（likely，稳定性一般）；最高领导人重要文章首发地
+    enabled: false
+    notes: feedx.net 代理 502 不稳定；qstheory-list 爬虫已覆盖求是全文
 
   - id: qstheory-list
     name: Qiushi Web Commentary
@@ -556,10 +552,10 @@ sources:
     category: cn_official
     lang: zh
     method: json_api
-    url: "https://sousuo.www.gov.cn/zcwjk/policyDocumentLibrary?t=zhengcelibrary"
+    url: "https://sousuo.www.gov.cn/search-gov/data?t=zhengcelibrary_gw_bm_gb&q=&timetype=timeqb&sort=pubtime&sortType=1&searchfield=title&p=1&n=20&type=gwyzcwjk"
     parser: gov_cn.parse_policies
     max_items: 20
-    notes: 政策文件库前端背后 JSON 检索接口（unverified，具体参数待抓包，parser 用 JSON 拾荒器容错）；与 RSSHub zuixin 路由互补
+    notes: /zcwjk/policyDocumentLibrary 是前端页面；真实接口为 search-gov/data(holiday-cn 等项目在 Actions 环境验证可用)
 
   - id: ccdi-shencha
     name: CCDI Investigations
@@ -569,8 +565,19 @@ sources:
     lang: zh
     method: rsshub
     url: /gov/ccdi/scdcn
+    enabled: false
     max_items: 20
-    notes: RSSHub 通用路由 /gov/ccdi/+路径（文档 confirmed，scdcn=审查调查）；反腐通报是体制风向核心信号
+    notes: 中纪委 WAF 拦截数据中心 IP(RSSHub 路由名正确但抓空)，由 ccdi-gnews 替代
+
+  - id: ccdi-gnews
+    name: CCDI via Google News
+    name_zh: 中央纪委国家监委
+    tier: B
+    category: cn_official
+    lang: zh
+    method: google_news
+    url: "site:ccdi.gov.cn when:2d"
+    notes: 官网 WAF 拦截直抓与 RSSHub，Google News 中文版兜底(要闻+审查调查混合)
 
   - id: ccdi-yaowen
     name: CCDI News
@@ -579,8 +586,9 @@ sources:
     lang: zh
     method: rsshub
     url: /gov/ccdi/yaowenn
+    enabled: false
     max_items: 15
-    notes: 同上通用路由，yaowenn 为站内要闻栏目路径（unverified，CI 探活）
+    notes: 中纪委 WAF 拦截数据中心 IP(RSSHub 路由名正确但抓空)，由 ccdi-gnews 替代
 
   - id: pbc
     name: PBoC Monetary Policy
@@ -646,10 +654,10 @@ sources:
     category: cn_official
     lang: zh
     method: html_scrape
-    url: https://www.safe.gov.cn/safe/xwfb/index.html
+    url: https://www.safe.gov.cn/safe/ywfb/index.html
     parser: cn_ministries.parse_list
     max_items: 15
-    notes: 列表页可抓（unverified）；同为金融监管系统站点，可能有与 pbc 同款 WAF——CI 先试 requests
+    notes: 站点改版：新闻栏目由 xwfb 迁至 ywfb(要闻发布)
 
   # ════════════ 中文财经补充（cn_media / squawk） ════════════
 
@@ -659,10 +667,10 @@ sources:
     tier: A
     category: squawk
     lang: zh
-    method: rsshub
-    url: /cls/telegraph
+    method: telegram
+    url: https://t.me/s/cailianshe
     max_items: 30
-    notes: 快讯电报；官方接口需签名，走 RSSHub /cls/telegraph 路由（文档 confirmed）不自行实现签名
+    notes: RSSHub /cls/telegraph 因 cls.cn 签名接口对海外 IP 返空；改抓财联社官方 TG 频道镜像
 
   - id: wallstreetcn-lives
     name: WallStreetCN 7x24
@@ -739,7 +747,7 @@ sources:
     category: thinktank
     lang: en
     method: google_news
-    url: "site:chinafile.com when:7d"
+    url: "site:chinafile.com when:1m"
     max_items: 8
     schedule: morning
     notes: 官方 RSS 未核实 → Google News 兜底；免费全文站
@@ -750,7 +758,7 @@ sources:
     category: thinktank
     lang: en
     method: google_news
-    url: "site:prcleader.org when:30d"
+    url: "site:prcleader.org when:1y"
     max_items: 6
     schedule: weekly
     notes: 季刊（confirmed 免费）；无稳定 feed → Google News 兜底
@@ -795,10 +803,10 @@ sources:
     tier: A
     category: newsletter
     lang: en
-    method: rss
-    url: https://adamtooze.substack.com/feed
+    method: google_news
+    url: "site:adamtooze.substack.com when:7d"
     max_items: 8
-    notes: Substack 原生域（confirmed 模式）；宏观+经济史，多数免费全文
+    notes: Substack+个人站均 Cloudflare 403，Google News 兜底
 
   - id: noahpinion
     name: Noahpinion
@@ -837,7 +845,9 @@ sources:
     category: newsletter
     lang: en
     method: rss
-    url: https://www.bitsaboutmoney.com/rss/
+    url: https://www.bitsaboutmoney.com/archive/rss/
+    fallback_urls:
+      - https://bitsaboutmoney.com/archive/rss/
     max_items: 5
     schedule: morning
     notes: Ghost 站标准 /rss/（likely）；支付/银行/合规内部视角，免费全文
@@ -854,26 +864,29 @@ sources:
     notes: WordPress 全文 RSS（confirmed）；日更多帖，经济学界高信号博客
 
   - id: concoda
-    name: Concoda
+    name: Conks (原 Concoda)
     name_zh: Concoda
     category: newsletter
     lang: en
     method: rss
-    url: https://www.concoda.com/feed
+    url: https://www.conks.plumbing/feed
+    fallback_urls:
+      - https://conkstack.substack.com/feed
+      - https://concoda.substack.com/feed
     max_items: 5
     schedule: morning
-    notes: Substack（likely）；美元/repo 市场微观结构
+    notes: 2026 年更名 Conks 并迁至 conks.plumbing
 
   - id: macro-compass
     name: The Macro Compass
     name_zh: The Macro Compass（Alf Peccatiello）
     category: newsletter
     lang: en
-    method: rss
-    url: https://themacrocompass.substack.com/feed
+    method: google_news
+    url: "site:themacrocompass.substack.com when:1m"
     max_items: 5
     schedule: morning
-    notes: Substack 原生域（confirmed 活跃）；付费为主，feed 出预览
+    notes: Substack 403，Google News 兜底
 
   - id: import-ai
     name: Import AI
@@ -881,10 +894,12 @@ sources:
     category: newsletter
     lang: en
     method: rss
-    url: https://importai.substack.com/feed
+    url: https://jack-clark.net/feed/
+    fallback_urls:
+      - https://jack-clark.net/category/import-ai/feed/
     max_items: 5
     schedule: morning
-    notes: Substack（likely）；AI policy/safety 周报，免费全文
+    notes: Substack 403；jack-clark.net(WordPress) 为作者本人全文镜像
 
   - id: one-useful-thing
     name: One Useful Thing
@@ -1038,7 +1053,10 @@ sources:
     category: thinktank
     lang: en
     method: rss
-    url: https://www.brookings.edu/feed/
+    url: https://www.brookings.edu/feeds/rss/research/
+    fallback_urls:
+      - https://www.brookings.edu/feed/
+      - "https://news.google.com/rss/search?q=site:brookings.edu+when:7d&hl=en-US&gl=US&ceid=US:en"
     schedule: morning
     max_items: 8
     notes: WordPress /feed/（likely）；量大，AI 分级消化
@@ -1048,11 +1066,11 @@ sources:
     name_zh: 战略与国际研究中心
     category: thinktank
     lang: en
-    method: rss
-    url: https://www.csis.org/analysis/feed
+    method: google_news
+    url: "site:csis.org when:7d"
     schedule: morning
     max_items: 8
-    notes: 官方 rss-feeds 索引页确认有分栏 feed（具体路径 unverified，CI 探活）
+    notes: 官方已不提供公开 RSS(仅邮件订阅)，Google News 兜底
 
   - id: cfr-gnews
     name: CFR (Google News)
@@ -1130,7 +1148,9 @@ sources:
     category: thinktank
     lang: en
     method: rss
-    url: https://www.imf.org/en/news/rss
+    url: "https://www.imf.org/en/rss-list/feed?category=WHATSNEW"
+    fallback_urls:
+      - "https://www.imf.org/external/rss/feeds.aspx?category=WHATSNEW"
     schedule: morning
     max_items: 8
     notes: 官方 RSS 索引确认（confirmed）；WEO/GFSR/Article IV 动态
@@ -1190,10 +1210,13 @@ sources:
     category: crypto
     lang: en
     method: rss
-    url: https://cryptohayes.substack.com/feed
+    url: "https://medium.com/feed/@cryptohayes"
+    fallback_urls:
+      - https://cryptohayes.medium.com/feed
+      - https://cryptohayes.substack.com/feed
     schedule: morning
     max_items: 5
-    notes: Substack（confirmed 活跃）；宏观+加密长文，免费全文
+    notes: Substack 403，走 Medium 同步镜像
 
   - id: wu-blockchain
     name: Wu Blockchain
@@ -1201,9 +1224,12 @@ sources:
     category: crypto
     lang: en
     method: rss
-    url: https://wublockchain.substack.com/feed
+    url: "https://medium.com/feed/@wublockchain"
+    fallback_urls:
+      - https://wublockchain.medium.com/feed
+      - https://wublock.substack.com/feed
     max_items: 10
-    notes: Substack（likely，子域名待 CI 核实）；亚洲加密新闻密度高
+    notes: Substack 403，走 Medium 同步镜像；Substack 子域实为 wublock
 
   - id: deribit-insights
     name: Deribit Insights
@@ -1225,11 +1251,11 @@ sources:
     tier: A
     category: podcast
     lang: en
-    method: podcast_itunes
-    url: https://feeds.bloomberg.fm/BLM2009837477
+    method: rss
+    url: "https://www.omnycontent.com/d/playlist/e73c998e-6e60-432f-8610-ae210140c5b1/8a94442e-5a74-4fa2-8b8d-ae27003a8d6b/982f5071-765c-403d-969d-ae27003a8d83/podcast.rss"
     schedule: morning
     max_items: 4
-    notes: 官方 feed（confirmed）；全球宏观访谈第一
+    notes: 原 feeds.bloomberg.fm 域名已废；Omny 官方 feed
 
   - id: pod-macro-voices
     name: MacroVoices
@@ -1247,11 +1273,11 @@ sources:
     name_zh: Forward Guidance（Blockworks）
     category: podcast
     lang: en
-    method: podcast_itunes
-    url: "search:Forward Guidance Blockworks"
+    method: rss
+    url: https://feeds.megaphone.fm/forwardguidance
     schedule: morning
     max_items: 3
-    notes: iTunes 搜索解析（宏观+加密交叉访谈）
+    notes: iTunes 搜索会命中已停更旧条目(空 feed)，直连 Megaphone
 
   - id: pod-flirting-models
     name: Flirting with Models
@@ -1302,11 +1328,14 @@ sources:
     name_zh: Sinica（Kaiser Kuo）
     category: podcast
     lang: en
-    method: podcast_itunes
-    url: "search:Sinica Podcast"
+    method: rss
+    url: "https://api.substack.com/feed/podcast/2079154.rss"
+    fallback_urls:
+      - https://www.sinicapodcast.com/feed
+      - https://sinica.substack.com/feed
     schedule: morning
     max_items: 3
-    notes: 中国研究老牌播客；已迁 Substack
+    notes: 旧 art19 feed 已空；Sinica 2023 年迁至自有 Substack
 
   - id: pod-acquired
     name: Acquired
@@ -1346,11 +1375,11 @@ sources:
     name_zh: 声东击西
     category: podcast
     lang: zh
-    method: podcast_itunes
-    url: https://etw.fm/feed
+    method: rss
+    url: https://feeds.fireside.fm/shengdongjixi/rss
     schedule: morning
     max_items: 3
-    notes: Typlog 直连 feed（likely，失败则改 search:声东击西,cn）
+    notes: etw.fm/feed 已 404；Fireside 官方 feed
 
   - id: pod-shangye-jiushi
     name: 商业就是这样

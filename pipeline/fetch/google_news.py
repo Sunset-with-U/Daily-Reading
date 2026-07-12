@@ -11,11 +11,17 @@ from ..models import FetchContext, FetchResult, SourceConfig
 from . import http
 from .rss import parse_feed_bytes
 
-_BASE = "https://news.google.com/rss/search?q={q}&hl=en-US&gl=US&ceid=US:en"
+_BASE = "https://news.google.com/rss/search?q={q}&hl={hl}&gl={gl}&ceid={gl}:{ceid_lang}"
+# 中文站点只在中文版 Google News 有索引，必须按源语言选版本
+_EDITIONS = {
+    "zh": {"hl": "zh-CN", "gl": "CN", "ceid_lang": "zh-Hans"},
+    "en": {"hl": "en-US", "gl": "US", "ceid_lang": "en"},
+}
 
 
 def fetch(src: SourceConfig, ctx: FetchContext) -> FetchResult:
-    url = _BASE.format(q=quote(src.url))
+    edition = _EDITIONS.get(src.lang, _EDITIONS["en"])
+    url = _BASE.format(q=quote(src.url), **edition)
     resp = http.get(url, timeout_s=src.timeout_s)
     items = parse_feed_bytes(resp.content, src, ctx)
     for item in items:

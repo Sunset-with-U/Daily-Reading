@@ -2,20 +2,20 @@
 
 > 本文档由 `scripts/gen_sources_doc.py` 从 `config/sources.yaml` 自动生成，请勿手改。
 
-共 **128** 个源（启用 122 个），其中 X 主题组覆盖 **104** 个精选账号。
+共 **129** 个源（启用 120 个），其中 X 主题组覆盖 **104** 个精选账号。
 
 ## 接入方式分布
 
 | 方式 | 数量 | 说明 |
 |---|---:|---|
-| RSS/Atom | 63 | `rss` |
-| Google News 兜底 | 16 | `google_news` |
+| RSS/Atom | 60 | `rss` |
+| Google News 兜底 | 22 | `google_news` |
 | HTML 爬虫 | 15 | `html_scrape` |
-| 播客（iTunes 解析） | 13 | `podcast_itunes` |
+| 自建 RSSHub | 9 | `rsshub` |
+| 播客（iTunes 解析） | 9 | `podcast_itunes` |
 | X（twitterapi.io，需密钥） | 9 | `twitter` |
-| 自建 RSSHub | 8 | `rsshub` |
 | 公开 JSON API | 3 | `json_api` |
-| Telegram 公开频道 | 1 | `telegram` |
+| Telegram 公开频道 | 2 | `telegram` |
 
 ## 分类明细
 
@@ -23,7 +23,7 @@
 
 | 源 | 等级 | 班次 | 方式 | 状态 | 备注 |
 |---|---|---|---|---|---|
-| 财联社·电报（`cls-telegraph`） | A·核心 | 早晚 | 自建 RSSHub | ✅ | 快讯电报；官方接口需签名，走 RSSHub /cls/telegraph 路由（文档 confirmed）不自行实现签名 |
+| 财联社·电报（`cls-telegraph`） | A·核心 | 早晚 | Telegram 公开频道 | ✅ | RSSHub /cls/telegraph 因 cls.cn 签名接口对海外 IP 返空；改抓财联社官方 TG 频道镜像 |
 | FinancialJuice 快讯（`financialjuice-tg`） | A·核心 | 早晚 | Telegram 公开频道 | ✅ | 与 @DeItaone 同源的实时市场快讯；X 免费替代层 |
 | 华尔街见闻·7×24 快讯（`wallstreetcn-lives`） | A·核心 | 早晚 | 公开 JSON API | ✅ | 公开 JSON API（confirmed，RSSHub 同源）；7×24 快讯流 |
 | X·人工智能（`x-ai`） | B·标准 | 早晚 | X（twitterapi.io，需密钥） | ✅ | 14 账号；AI/ML 前沿与应用 |
@@ -61,7 +61,7 @@
 
 | 源 | 等级 | 班次 | 方式 | 状态 | 备注 |
 |---|---|---|---|---|---|
-| 财新网（`caixin`） | A·核心 | 早晚 | RSS/Atom | ✅ | 官方 Feedly 向 feed（confirmed 但更新稀疏）；标题层，付费墙严；备选 RSSHub caixin 路由/Telegram @caixin_web |
+| 财新网（`caixin`） | A·核心 | 早晚 | 自建 RSSHub | ✅ | 官方 feedlyRss 接口 406；RSSHub /caixin/latest 文档确认可用 |
 | 华尔街见闻·资讯（`wallstreetcn-global`） | A·核心 | 早晚 | 公开 JSON API | ✅ | 公开 JSON API（RSSHub 同源实现） |
 | 21世纪经济报道（`21jingji-gnews`） | B·标准 | 早晚 | Google News 兜底 | ✅ | 无 RSS（unverified）→ Google News 兜底；监管动态快，标题层 |
 | 36氪（`36kr`） | B·标准 | 早晚 | RSS/Atom | ✅ | 官方 feed，社区长期在用（unverified，CI 探活）；科技商业 |
@@ -76,30 +76,31 @@
 | 新京报（`bjnews-gnews`） | C·尽力而为 | 早晚 | Google News 兜底 | ✅ | 无稳定 RSS（unverified）→ Google News 兜底；时政与社会议题 |
 | 财经杂志（`caijing-gnews`） | C·尽力而为 | 早晚 | Google News 兜底 | ✅ | 无 RSS（unverified）→ Google News 兜底 |
 | 经济观察报（`eeo-gnews`） | C·尽力而为 | 早晚 | Google News 兜底 | ✅ | 周报节奏，无 RSS（unverified）→ Google News 兜底 |
-| 虎嗅（`huxiu`） | C·尽力而为 | 早晚 | RSS/Atom | ✅ | 官方 rss/0.xml 历史存在（unverified，CI 探活）；失效则换 RSSHub /huxiu 路由 |
+| 虎嗅（`huxiu`） | C·尽力而为 | 早晚 | 自建 RSSHub | ✅ | 官方 rss/0.xml 长期 502；RSSHub /huxiu/article 兜底 |
 | 端传媒（`initium-gnews`） | C·尽力而为 | 早晚 | Google News 兜底 | ✅ | 付费墙，无公开 feed（unverified）→ Google News 标题层 |
 
-### 中文官方与政策（17）
+### 中文官方与政策（18）
 
 | 源 | 等级 | 班次 | 方式 | 状态 | 备注 |
 |---|---|---|---|---|---|
-| 中央纪委·审查调查（`ccdi-shencha`） | A·核心 | 早晚 | 自建 RSSHub | ✅ | RSSHub 通用路由 /gov/ccdi/+路径（文档 confirmed，scdcn=审查调查）；反腐通报是体制风向核心信号 |
+| 中央纪委·审查调查（`ccdi-shencha`） | A·核心 | 早晚 | 自建 RSSHub | ⛔ 停用 | 中纪委 WAF 拦截数据中心 IP(RSSHub 路由名正确但抓空)，由 ccdi-gnews 替代 |
 | 证监会·新闻发布（`csrc`） | A·核心 | 早晚 | HTML 爬虫 | ✅ | 静态 shtml 列表页（confirmed），常规 UA 可抓，全文可得 |
 | 中国政府网·最新政策（`gov-cn-zhengce`） | A·核心 | 早晚 | 自建 RSSHub | ⛔ 停用 | CI 实测路由返回 503 route-is-empty（2026-07-12），改走 gov-cn-zhengceku 官方 JSON API；留此条目待 RSSHub 修复后再启用 |
-| 国务院政策文件库（`gov-cn-zhengceku`） | A·核心 | 早晚 | 公开 JSON API | ✅ | 政策文件库前端背后 JSON 检索接口（unverified，具体参数待抓包，parser 用 JSON 拾荒器容错）；与 RSSHub zuixin 路由互补 |
+| 国务院政策文件库（`gov-cn-zhengceku`） | A·核心 | 早晚 | 公开 JSON API | ✅ | /zcwjk/policyDocumentLibrary 是前端页面；真实接口为 search-gov/data(holiday-cn 等项目在 Actions 环境验证可用) |
 | 中国人民银行·货币政策司（`pbc`） | A·核心 | 早晚 | HTML 爬虫 | ⛔ 停用 | 确认有 wzws JS 挑战 WAF（confirmed），requests 裸抓必败；待 Playwright/headless 方案（参考 PbcCrawler），数据面先用 akshare 兜底 |
-| 求是（`qstheory-feedx`） | A·核心 | 早晚 | RSS/Atom | ✅ | 半月刊；FeedX 第三方全文源（likely，稳定性一般）；最高领导人重要文章首发地 |
+| 求是（`qstheory-feedx`） | A·核心 | 早晚 | RSS/Atom | ⛔ 停用 | feedx.net 代理 502 不稳定；qstheory-list 爬虫已覆盖求是全文 |
 | 人民日报（`rmrb-paper`） | A·核心 | 早报 | HTML 爬虫 | ✅ | 电子版按版面遍历，全文可得；每日凌晨更新 |
 | 国家统计局·最新发布（`stats`） | A·核心 | 早晚 | HTML 爬虫 | ✅ | 新闻稿/解读列表页（confirmed）；数据本体走 akshare/easyquery，不在本管道 |
 | 学习时报（`studytimes`） | A·核心 | 早报 | HTML 爬虫 | ✅ | 电子版周一/三/五出报（likely，URL 模板未验证）；干部教育核心刊物 |
 | 新华网·财经（`xinhua-fortune`） | A·核心 | 早晚 | HTML 爬虫 | ✅ | 同上，财经频道列表页直抓（likely） |
 | 新华网·时政（`xinhua-politics`） | A·核心 | 早晚 | HTML 爬虫 | ✅ | 中文站无可靠官方 RSS（likely）→ 频道列表页直抓，全文可得；重点看权威发布/新华时评 |
 | 央视新闻联播·文字版（`xwlb`） | A·核心 | 晚报 | HTML 爬虫 | ✅ | 每日一页列当天条目（confirmed）；文字稿约 21 点齐全，晚报班次（北京20点）抓当日可能不全——已知坑 |
-| 中央纪委·要闻（`ccdi-yaowen`） | B·标准 | 早晚 | 自建 RSSHub | ✅ | 同上通用路由，yaowenn 为站内要闻栏目路径（unverified，CI 探活） |
+| 中央纪委国家监委（`ccdi-gnews`） | B·标准 | 早晚 | Google News 兜底 | ✅ | 官网 WAF 拦截直抓与 RSSHub，Google News 中文版兜底(要闻+审查调查混合) |
+| 中央纪委·要闻（`ccdi-yaowen`） | B·标准 | 早晚 | 自建 RSSHub | ⛔ 停用 | 中纪委 WAF 拦截数据中心 IP(RSSHub 路由名正确但抓空)，由 ccdi-gnews 替代 |
 | 财政部·政务信息（`mof`） | B·标准 | 早晚 | HTML 爬虫 | ✅ | 政务信息列表页静态 HTML（likely）；附件多为 PDF——已知坑 |
 | 发改委·政策发布（`ndrc`） | B·标准 | 早晚 | HTML 爬虫 | ✅ | 政策发布列表页（likely）；标准列表+详情两级抓取 |
 | 求是网·网评（`qstheory-list`） | B·标准 | 早晚 | HTML 爬虫 | ✅ | 首页列表宽松匹配 /20260615/{hash}/c.html 型文章 URL（likely）；FeedX 挂掉时的兜底与日常网评来源 |
-| 外汇局·新闻发布（`safe`） | B·标准 | 早晚 | HTML 爬虫 | ✅ | 列表页可抓（unverified）；同为金融监管系统站点，可能有与 pbc 同款 WAF——CI 先试 requests |
+| 外汇局·新闻发布（`safe`） | B·标准 | 早晚 | HTML 爬虫 | ✅ | 站点改版：新闻栏目由 xwfb 迁至 ywfb(要闻发布) |
 
 ### 央行与监管（3）
 
@@ -114,7 +115,7 @@
 | 源 | 等级 | 班次 | 方式 | 状态 | 备注 |
 |---|---|---|---|---|---|
 | arXiv·量化金融（`arxiv-qfin`） | A·核心 | 早报 | RSS/Atom | ✅ | 官方 RSS，工作日每日更新 |
-| NBER 工作论文（`nber-wp`） | A·核心 | 早报 | RSS/Atom | ✅ | 主站对数据中心 IP 返回 403，back.nber.org 为官方后端镜像 |
+| NBER 工作论文（`nber-wp`） | A·核心 | 早报 | Google News 兜底 | ✅ | NBER 全域(含镜像)对数据中心 IP 403，改 Google News 兜底 |
 | arXiv·机器学习（`arxiv-cslg`） | B·标准 | 早报 | RSS/Atom | ✅ | 官方 RSS（confirmed）；量大，仅取头部；AI/ML 前沿 |
 | 英央行·Bank Underground（`bank-underground`） | B·标准 | 早报 | RSS/Atom | ✅ | 英格兰银行研究员博客（likely）；免费全文 |
 | 国际清算银行·论文（`bis-papers`） | B·标准 | 早报 | RSS/Atom | ✅ | BIS 论文列表 feed（unverified，BIS 有官方 feed 索引）；研究质量最高的国际机构 |
@@ -137,7 +138,7 @@
 | 查塔姆研究所（`chatham-house-gnews`） | B·标准 | 每周 | Google News 兜底 | ✅ | 官方 RSS 索引页存在但路径未核实 → 先 Google News |
 | ChinaFile 中参馆（`chinafile-gnews`） | B·标准 | 早报 | Google News 兜底 | ✅ | 官方 RSS 未核实 → Google News 兜底；免费全文站 |
 | 中国领导层观察（Hoover）（`clm-hoover`） | B·标准 | 每周 | Google News 兜底 | ✅ | 季刊（confirmed 免费）；无稳定 feed → Google News 兜底 |
-| 战略与国际研究中心（`csis`） | B·标准 | 早报 | RSS/Atom | ✅ | 官方 rss-feeds 索引页确认有分栏 feed（具体路径 unverified，CI 探活） |
+| 战略与国际研究中心（`csis`） | B·标准 | 早报 | Google News 兜底 | ✅ | 官方已不提供公开 RSS(仅邮件订阅)，Google News 兜底 |
 | 国际货币基金组织（`imf-news`） | B·标准 | 早报 | RSS/Atom | ✅ | 官方 RSS 索引确认（confirmed）；WEO/GFSR/Article IV 动态 |
 | 墨卡托中国研究所（`merics`） | B·标准 | 每周 | HTML 爬虫 | ✅ | 无 RSS（unverified）→ 列表页抓取；欧洲最大中国研究所 |
 | The Wire China（`wirechina-gnews`） | B·标准 | 早报 | Google News 兜底 | ✅ | 正文付费墙（confirmed），Google News 标题层兜底 |
@@ -146,7 +147,7 @@
 
 | 源 | 等级 | 班次 | 方式 | 状态 | 备注 |
 |---|---|---|---|---|---|
-| Chartbook（Adam Tooze）（`chartbook`） | A·核心 | 早晚 | RSS/Atom | ✅ | Substack 原生域（confirmed 模式）；宏观+经济史，多数免费全文 |
+| Chartbook（Adam Tooze）（`chartbook`） | A·核心 | 早晚 | Google News 兜底 | ✅ | Substack+个人站均 Cloudflare 403，Google News 兜底 |
 | ChinaTalk（`chinatalk`） | A·核心 | 早晚 | RSS/Atom | ✅ | Substack 自定义域（likely）；中美科技/AI/出口管制，含播客，免费+付费混合 |
 | 边际革命（Tyler Cowen）（`marginal-revolution`） | A·核心 | 早晚 | RSS/Atom | ✅ | WordPress 全文 RSS（confirmed）；日更多帖，经济学界高信号博客 |
 | Pekingnology（王子琛）（`pekingnology`） | A·核心 | 早晚 | RSS/Atom | ✅ | Substack（likely，备选 pekingnology.substack.com/feed）；免费全文，翻译中文政策文件 |
@@ -154,10 +155,10 @@
 | Apricitas（Joseph Politano）（`apricitas`） | B·标准 | 早晚 | RSS/Atom | ✅ | Substack（likely）；FRED/BLS 数据讲美国宏观，基本免费全文 |
 | Astral Codex Ten（`astral-codex-ten`） | B·标准 | 早报 | RSS/Atom | ✅ | Substack（likely）；思维训练类，免费为主 |
 | Bits about Money（Patrick McKenzie）（`bits-about-money`） | B·标准 | 早报 | RSS/Atom | ✅ | Ghost 站标准 /rss/（likely）；支付/银行/合规内部视角，免费全文 |
-| Concoda（`concoda`） | B·标准 | 早报 | RSS/Atom | ✅ | Substack（likely）；美元/repo 市场微观结构 |
-| Import AI（Jack Clark）（`import-ai`） | B·标准 | 早报 | RSS/Atom | ✅ | Substack（likely）；AI policy/safety 周报，免费全文 |
+| Concoda（`concoda`） | B·标准 | 早报 | RSS/Atom | ✅ | 2026 年更名 Conks 并迁至 conks.plumbing |
+| Import AI（Jack Clark）（`import-ai`） | B·标准 | 早报 | RSS/Atom | ✅ | Substack 403；jack-clark.net(WordPress) 为作者本人全文镜像 |
 | Latent Space（swyx）（`latent-space`） | B·标准 | 早报 | RSS/Atom | ✅ | Substack（likely）；AI 工程实践，含播客，免费为主 |
-| The Macro Compass（Alf Peccatiello）（`macro-compass`） | B·标准 | 早报 | RSS/Atom | ✅ | Substack 原生域（confirmed 活跃）；付费为主，feed 出预览 |
+| The Macro Compass（Alf Peccatiello）（`macro-compass`） | B·标准 | 早报 | Google News 兜底 | ✅ | Substack 403，Google News 兜底 |
 | Money Stuff（Matt Levine）（`money-stuff`） | B·标准 | 早晚 | RSS/Atom | ⛔ 停用 | 邮件免费但 Bloomberg 网页存档付费；NewsletterHunt 镜像 feed 待核实（unverified）——启用前先人工确认；标题层已由 bloomberg-opinion 覆盖 |
 | Net Interest（Marc Rubinstein）（`net-interest`） | B·标准 | 早报 | RSS/Atom | ✅ | Substack（likely）；银行/资管深度，周更免费文全文 |
 | Noahpinion（Noah Smith）（`noahpinion`） | B·标准 | 早晚 | RSS/Atom | ✅ | Substack 自定义域（likely）；应用经济学+东亚，免费文多 |
@@ -171,29 +172,29 @@
 
 | 源 | 等级 | 班次 | 方式 | 状态 | 备注 |
 |---|---|---|---|---|---|
-| Arthur Hayes 博客（`arthur-hayes`） | A·核心 | 早报 | RSS/Atom | ✅ | Substack（confirmed 活跃）；宏观+加密长文，免费全文 |
+| Arthur Hayes 博客（`arthur-hayes`） | A·核心 | 早报 | RSS/Atom | ✅ | Substack 403，走 Medium 同步镜像 |
 | Glassnode·链上周报（`glassnode-insights`） | A·核心 | 早报 | RSS/Atom | ✅ | Ghost 博客 RSS（confirmed）；The Week On-chain 免费全文 |
 | CoinDesk（`coindesk`） | B·标准 | 早晚 | RSS/Atom | ✅ |  |
 | Deribit·期权研究（`deribit-insights`） | B·标准 | 早报 | RSS/Atom | ✅ | WordPress /feed/（likely）；被 Coinbase 收购后更新趋缓，观察 |
-| Paradigm 研究（`paradigm-research`） | B·标准 | 早报 | RSS/Atom | ✅ |  |
+| Paradigm 研究（`paradigm-research`） | B·标准 | 早报 | Google News 兜底 | ✅ | 官网改版后 RSS 全部下线(2026-07 实测)，发文月频，Google News 兜底 |
 | The Block（`theblock`） | B·标准 | 早晚 | RSS/Atom | ✅ | 官方 feed（confirmed）；新闻免费（feed 为摘要），Research 付费 |
-| 吴说区块链（英文版）（`wu-blockchain`） | B·标准 | 早晚 | RSS/Atom | ✅ | Substack（likely，子域名待 CI 核实）；亚洲加密新闻密度高 |
+| 吴说区块链（英文版）（`wu-blockchain`） | B·标准 | 早晚 | RSS/Atom | ✅ | Substack 403，走 Medium 同步镜像；Substack 子域实为 wublock |
 
 ### 播客（13）
 
 | 源 | 等级 | 班次 | 方式 | 状态 | 备注 |
 |---|---|---|---|---|---|
-| Odd Lots（Bloomberg）（`pod-odd-lots`） | A·核心 | 早报 | 播客（iTunes 解析） | ✅ | 官方 feed（confirmed）；全球宏观访谈第一 |
+| Odd Lots（Bloomberg）（`pod-odd-lots`） | A·核心 | 早报 | RSS/Atom | ✅ | 原 feeds.bloomberg.fm 域名已废；Omny 官方 feed |
 | Acquired（`pod-acquired`） | B·标准 | 早报 | 播客（iTunes 解析） | ✅ | Transistor 官方 feed（likely）；商业案例深度 |
 | Capital Allocators（Ted Seides）（`pod-capital-allocators`） | B·标准 | 早报 | 播客（iTunes 解析） | ✅ | 顶级 LP/GP 访谈 |
 | Flirting with Models（Corey Hoffstein）（`pod-flirting-models`） | B·标准 | 早报 | 播客（iTunes 解析） | ✅ | 量化策略深访；季节性更新 |
-| Forward Guidance（Blockworks）（`pod-forward-guidance`） | B·标准 | 早报 | 播客（iTunes 解析） | ✅ | iTunes 搜索解析（宏观+加密交叉访谈） |
+| Forward Guidance（Blockworks）（`pod-forward-guidance`） | B·标准 | 早报 | RSS/Atom | ✅ | iTunes 搜索会命中已停更旧条目(空 feed)，直连 Megaphone |
 | 忽左忽右（`pod-huzuohuyou`） | B·标准 | 早报 | 播客（iTunes 解析） | ✅ | JustPod 出品；历史+国际+人文 |
 | Invest Like the Best（`pod-invest-like-best`） | B·标准 | 早报 | 播客（iTunes 解析） | ✅ | Colossus 网络；顶级投资者访谈 |
 | MacroVoices（`pod-macro-voices`） | B·标准 | 早报 | 播客（iTunes 解析） | ✅ | iTunes ID（confirmed）→ Lookup 解析真实 feed |
 | 商业就是这样（`pod-shangye-jiushi`） | B·标准 | 早报 | 播客（iTunes 解析） | ✅ | 商业深度叙事 |
-| 声东击西（`pod-shengdongjixi`） | B·标准 | 早报 | 播客（iTunes 解析） | ✅ | Typlog 直连 feed（likely，失败则改 search:声东击西,cn） |
-| Sinica（Kaiser Kuo）（`pod-sinica`） | B·标准 | 早报 | 播客（iTunes 解析） | ✅ | 中国研究老牌播客；已迁 Substack |
+| 声东击西（`pod-shengdongjixi`） | B·标准 | 早报 | RSS/Atom | ✅ | etw.fm/feed 已 404；Fireside 官方 feed |
+| Sinica（Kaiser Kuo）（`pod-sinica`） | B·标准 | 早报 | RSS/Atom | ✅ | 旧 art19 feed 已空；Sinica 2023 年迁至自有 Substack |
 | Top Traders Unplugged（`pod-top-traders`） | B·标准 | 早报 | 播客（iTunes 解析） | ✅ | CTA/系统化交易访谈 |
 | 张小珺·商业访谈录（`pod-zhangxiaojun`） | B·标准 | 早报 | 播客（iTunes 解析） | ✅ | AI 产业访谈密度高；主发小宇宙，Apple 同步 |
 
