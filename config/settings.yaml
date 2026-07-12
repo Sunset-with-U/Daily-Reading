@@ -1,0 +1,34 @@
+# ============================================================
+# Daily-Reading 全局设置（成本护栏与运行参数都在这里）
+# ============================================================
+
+fetch:
+  timeout_s: 20                 # 单源 HTTP 超时（秒）
+  max_items_per_source: 30      # 每源每次运行最多取多少条（去重前）
+  workers: 16                   # 抓取并发线程数
+  per_domain_concurrency: 2     # 同一域名同时最多几个请求（礼貌限速）
+  stage_wall_cap_min: 20        # 整个抓取阶段最长耗时（分钟）
+  content_truncate_chars: 4000  # 正文工作摘录截断长度（用于 AI 输入）
+  excerpt_chars: 500            # 看板展示摘录长度
+
+dedupe:
+  state_retention_days: 45      # seen_items 状态保留天数
+
+ai:
+  item_model: claude-haiku-4-5        # 逐条分析模型
+  report_model: claude-opus-4-8       # 每日报告模型（可降档为 claude-sonnet-5）
+  daily_item_cap: 600                 # 每天最多送 AI 分析的条目数（成本护栏）
+  item_max_tokens: 1500               # 逐条分析输出上限
+  report_max_tokens: 30000            # 报告输出上限
+  report_input_budget_tokens: 120000  # 报告输入预算（超出则进一步压缩）
+  batch_poll_interval_s: 60           # Batch 轮询间隔
+  batch_poll_timeout_min: 75          # Batch 等待死线（超时转断点续传）
+  batch_chunk_size: 10000             # 单个 batch 最大请求数
+
+report:
+  editions:
+    morning: "早报：覆盖隔夜欧美市场 + 今日亚洲时段展望"
+    evening: "晚报：覆盖今日亚洲时段回顾 + 欧美盘前展望"
+
+persist:
+  retention_days: 180           # 超过后旧日期数据瘦身（保留报告，条目去掉正文摘录）

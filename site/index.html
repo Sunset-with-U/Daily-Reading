@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Daily Reading · 每日金融研究看板</title>
+<style>
+  /* 雏形页（Phase 6 将替换为完整看板）—— Claude 色系 */
+  :root {
+    --bg: #F0EEE6; --surface: #FAF9F5; --text: #141413;
+    --muted: #6a6a67; --accent: #D97757; --border: #e3e0d5;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #141413; --surface: #1f1e1c; --text: #F0EEE6;
+            --muted: #9a988f; --border: #33322e; }
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body {
+    background: var(--bg); color: var(--text);
+    font: 16px/1.7 -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    max-width: 860px; margin: 0 auto; padding: 48px 20px;
+  }
+  h1 { font-family: Georgia, "Songti SC", "Noto Serif SC", serif;
+       font-size: 2rem; margin-bottom: .4rem; }
+  h1 .dot { color: var(--accent); }
+  .sub { color: var(--muted); margin-bottom: 2rem; }
+  .card { background: var(--surface); border: 1px solid var(--border);
+          border-radius: 12px; padding: 20px 24px; margin-bottom: 14px; }
+  .item-title { font-weight: 600; text-decoration: none; color: var(--text); }
+  .item-title:hover { color: var(--accent); }
+  .meta { color: var(--muted); font-size: .85rem; margin-top: 4px; }
+  .badge { display: inline-block; background: var(--accent); color: #fff;
+           border-radius: 6px; padding: 0 8px; font-size: .78rem; margin-right: 8px; }
+  #status { color: var(--muted); }
+</style>
+</head>
+<body>
+  <h1>Daily Reading<span class="dot">.</span></h1>
+  <p class="sub">每日金融研究看板 · 建设中（雏形页）— 完整看板即将上线</p>
+  <div id="status" class="card">正在加载数据 …</div>
+  <div id="feed"></div>
+<script>
+(async () => {
+  const status = document.getElementById("status");
+  const feed = document.getElementById("feed");
+  try {
+    const idx = await (await fetch("data/index.json")).json();
+    if (!idx.latest_date) { status.textContent = "暂无数据（等待第一次管线运行）"; return; }
+    const day = await (await fetch(`data/${idx.latest_date}/items.json`)).json();
+    const items = (day.items || []).slice(0, 50);
+    status.textContent = `最新数据：${idx.latest_date} · 共 ${day.items.length} 条`;
+    for (const it of items) {
+      const card = document.createElement("div");
+      card.className = "card";
+      const imp = it.analysis && it.analysis.importance
+        ? `<span class="badge">${it.analysis.importance}</span>` : "";
+      card.innerHTML = `
+        ${imp}<a class="item-title" href="${it.url}" target="_blank" rel="noopener">${it.title}</a>
+        <div class="meta">${it.source_name_zh || it.source_id} · ${it.published_at || it.fetched_at || ""}</div>`;
+      feed.appendChild(card);
+    }
+  } catch (e) {
+    status.textContent = "数据加载失败：" + e.message;
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,156 @@
+# ============================================================
+# Daily-Reading 信息源注册表
+# tier: A=核心(失败需关注) B=标准 C=尽力而为
+# method: rss | json_api | html_scrape | rsshub | telegram |
+#         google_news | twitter | podcast_itunes
+# schedule: both | morning | evening | weekly
+# test_group: pilot = CI 测试模式使用的试点源
+# URL 可用日期占位符: {yyyymm} {dd} {date_bj} {date_compact}
+# ============================================================
+
+defaults:
+  timeout_s: 20
+  max_items: 30
+  schedule: both
+  tier: B
+  enabled: true
+
+sources:
+  # ════════════ 试点源（Phase 1 薄切片，兼作 CI 测试组） ════════════
+
+  - id: bloomberg-markets
+    name: Bloomberg Markets
+    name_zh: 彭博·市场
+    tier: A
+    category: global_media
+    lang: en
+    method: rss
+    url: https://feeds.bloomberg.com/markets/news.rss
+    test_group: pilot
+    notes: 官方分栏 RSS；标题+摘要，正文付费墙
+
+  - id: wsj-markets
+    name: WSJ Markets
+    name_zh: 华尔街日报·市场
+    tier: A
+    category: global_media
+    lang: en
+    method: rss
+    url: https://feeds.a.dj.com/rss/RSSMarketsMain.xml
+    test_group: pilot
+    notes: 道琼斯官方 feed；标题层
+
+  - id: wallstreetcn-global
+    name: WallStreetCN
+    name_zh: 华尔街见闻·资讯
+    tier: A
+    category: cn_media
+    lang: zh
+    method: json_api
+    url: "https://api-one.wallstcn.com/apiv1/content/information-flow?channel=global-channel&accept=article&limit=25"
+    parser: wallstreetcn.parse_information_flow
+    test_group: pilot
+    notes: 公开 JSON API（RSSHub 同源实现）
+
+  - id: arxiv-qfin
+    name: arXiv q-fin
+    name_zh: arXiv·量化金融
+    tier: A
+    category: academic
+    lang: en
+    method: rss
+    url: https://rss.arxiv.org/rss/q-fin
+    schedule: morning
+    test_group: pilot
+    notes: 官方 RSS，工作日每日更新
+
+  - id: nber-wp
+    name: NBER Working Papers
+    name_zh: NBER 工作论文
+    tier: A
+    category: academic
+    lang: en
+    method: rss
+    url: https://www.nber.org/rss/new.xml
+    schedule: morning
+    test_group: pilot
+
+  - id: fed-press
+    name: Federal Reserve Press
+    name_zh: 美联储·新闻稿
+    tier: A
+    category: central_bank
+    lang: en
+    method: rss
+    url: https://www.federalreserve.gov/feeds/press_all.xml
+    test_group: pilot
+    notes: 全部新闻稿；声明/纪要全文免费
+
+  - id: coindesk
+    name: CoinDesk
+    name_zh: CoinDesk
+    tier: B
+    category: crypto
+    lang: en
+    method: rss
+    url: https://www.coindesk.com/arc/outboundfeeds/rss/
+    test_group: pilot
+
+  - id: paradigm-research
+    name: Paradigm Research
+    name_zh: Paradigm 研究
+    tier: B
+    category: crypto
+    lang: en
+    method: rss
+    url: https://www.paradigm.xyz/rss/feed.xml
+    schedule: morning
+    test_group: pilot
+
+  - id: financialjuice-tg
+    name: FinancialJuice (Telegram)
+    name_zh: FinancialJuice 快讯
+    tier: A
+    category: squawk
+    lang: en
+    method: telegram
+    url: https://t.me/s/FinancialJuice
+    max_items: 20
+    test_group: pilot
+    notes: 与 @DeItaone 同源的实时市场快讯；X 免费替代层
+
+  - id: thepaper-feedx
+    name: The Paper (via FeedX)
+    name_zh: 澎湃新闻
+    tier: B
+    category: cn_media
+    lang: zh
+    method: rss
+    url: https://feedx.net/rss/thepaper.xml
+    test_group: pilot
+    notes: 第三方全文聚合，Phase 2 补 RSSHub 主路由
+
+  - id: gov-cn-zhengce
+    name: gov.cn Policies
+    name_zh: 中国政府网·最新政策
+    tier: A
+    category: cn_official
+    lang: zh
+    method: rsshub
+    url: /gov/zhengce/zuixin
+    test_group: pilot
+    notes: 走本地 RSSHub 实例
+
+  - id: rmrb-paper
+    name: People's Daily
+    name_zh: 人民日报
+    tier: A
+    category: cn_official
+    lang: zh
+    method: html_scrape
+    url: "https://paper.people.com.cn/rmrb/pc/layout/{yyyymm}/{dd}/node_01.html"
+    parser: people_daily.parse_layout
+    schedule: morning
+    max_items: 25
+    test_group: pilot
+    notes: 电子版按版面遍历，全文可得；每日凌晨更新

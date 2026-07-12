@@ -1,0 +1,137 @@
+name: daily-pipeline
+
+on:
+  schedule:
+    - cron: "0 23 * * *"   # 北京 07:00 → 早报（cron 仅在默认分支生效）
+    - cron: "0 12 * * *"   # 北京 20:00 → 晚报
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "运行模式"
+        type: choice
+        options: [full, test]
+        default: test
+      source_filter:
+        description: "源过滤：逗号分隔的 id，或 test_group 名（如 pilot）"
+        type: string
+        default: ""
+      max_items:
+        description: "覆盖每源条数上限（留空=默认）"
+        type: string
+        default: ""
+      skip_ai:
+        description: "跳过 AI 分析与报告"
+        type: boolean
+        default: false
+      ai_cap:
+        description: "本次最多送 AI 的条目数（留空=不限）"
+        type: string
+        default: ""
+      skip_market:
+        description: "跳过市场数据"
+        type: boolean
+        default: false
+      verbose:
+        description: "逐源详细日志"
+        type: boolean
+        default: false
+
+# 与 health.yml 共享同一组，串行化所有会 git push 的任务
+concurrency:
+  group: data-writer
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  pipeline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    services:
+      rsshub:
+        image: diygod/rsshub:chromium-bundled
+        ports:
+          - 1200:1200
+        env:
+          NODE_ENV: production
+          CACHE_TYPE: memory
+          ALLOW_LOCALHOST: "true"
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+      TWITTERAPI_IO_KEY: ${{ secrets.TWITTERAPI_IO_KEY }}
+      RSSHUB_BASE: http://localhost:1200
+      PYTHONUNBUFFERED: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: 安装依赖
+        run: pip install -r requirements.txt
+
+      - name: 等待 RSSHub 就绪
+        run: |
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:1200/healthz && exit 0
+            sleep 2
+          done
+          echo "::warning::RSSHub 未就绪，rsshub 方法的源将失败（不阻塞其他源）"
+
+      - name: 回收上一轮未完成的 AI Batch
+        run: python -m pipeline.cli collect-pending
+
+      - name: 运行管线
+        run: |
+          ARGS=""
+          if [ "${{ inputs.mode }}" = "test" ]; then ARGS="$ARGS --mode test"; fi
+          if [ -n "${{ inputs.source_filter }}" ]; then ARGS="$ARGS --source-filter ${{ inputs.source_filter }}"; fi
+          if [ -n "${{ inputs.max_items }}" ]; then ARGS="$ARGS --max-items ${{ inputs.max_items }}"; fi
+          if [ "${{ inputs.skip_ai }}" = "true" ]; then ARGS="$ARGS --skip-ai"; fi
+          if [ -n "${{ inputs.ai_cap }}" ]; then ARGS="$ARGS --ai-cap ${{ inputs.ai_cap }}"; fi
+          if [ "${{ inputs.skip_market }}" = "true" ]; then ARGS="$ARGS --skip-market"; fi
+          if [ "${{ inputs.verbose }}" = "true" ]; then ARGS="$ARGS --verbose"; fi
+          echo "python -m pipeline.cli run $ARGS"
+          python -m pipeline.cli run $ARGS
+
+      - name: 提交数据
+        if: always()
+        run: |
+          git config user.name "daily-reading-bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add data/
+          if git diff --cached --quiet; then
+            echo "无数据变更"
+            exit 0
+          fi
+          git commit -m "data: $(date -u '+%Y-%m-%d %H:%M') UTC 运行产出"
+          for i in 1 2 3; do
+            git pull --rebase origin "${{ github.ref_name }}" && git push origin "HEAD:${{ github.ref_name }}" && exit 0
+            echo "push 失败，${i} 次重试…"; sleep 15
+          done
+          exit 1
+
+      - name: 组装站点
+        if: always()
+        run: |
+          mkdir -p _site
+          cp -r site/* _site/
+          [ -d data ] && cp -r data _site/data || true
+
+      - name: 上传 Pages 构件
+        if: always()
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: 部署 Pages
+        id: deployment
+        if: always()
+        continue-on-error: true   # 用户尚未在 Settings 里启用 Pages 时不阻塞管线
+        uses: actions/deploy-pages@v4
