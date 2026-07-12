@@ -10,10 +10,22 @@ from .feedxml import parse_feed
 
 
 def fetch(src: SourceConfig, ctx: FetchContext) -> FetchResult:
-    resp = http.get(src.url, timeout_s=src.timeout_s)
-    items = parse_feed_bytes(resp.content, src, ctx)
-    return FetchResult(src.id, status="ok", items=items,
-                       http_status=resp.status_code)
+    last_exc: Exception | None = None
+    any_parsed = False
+    for url in [src.url, *src.fallback_urls]:
+        try:
+            resp = http.get(url, timeout_s=src.timeout_s)
+            items = parse_feed_bytes(resp.content, src, ctx)
+        except Exception as exc:  # noqa: BLE001 — 逐个候选 URL 兜底
+            last_exc = exc
+            continue
+        any_parsed = True
+        if items:
+            return FetchResult(src.id, status="ok", items=items,
+                               http_status=resp.status_code)
+    if not any_parsed and last_exc is not None:
+        raise last_exc
+    return FetchResult(src.id, status="empty", items=[])
 
 
 def parse_feed_bytes(content: bytes, src: SourceConfig, ctx: FetchContext) -> list[RawItem]:

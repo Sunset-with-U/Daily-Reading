@@ -71,9 +71,13 @@ sources:
     category: academic
     lang: en
     method: rss
-    url: https://www.nber.org/rss/new.xml
+    url: https://back.nber.org/rss/new.xml
+    fallback_urls:
+      - https://www.nber.org/rss/new.xml
+      - https://data.nber.org/rss/new.xml
     schedule: morning
     test_group: pilot
+    notes: 主站对数据中心 IP 返回 403，back.nber.org 为官方后端镜像
 
   - id: fed-press
     name: Federal Reserve Press
@@ -103,7 +107,10 @@ sources:
     category: crypto
     lang: en
     method: rss
-    url: https://www.paradigm.xyz/rss/feed.xml
+    url: https://www.paradigm.xyz/feed.xml
+    fallback_urls:
+      - https://www.paradigm.xyz/rss.xml
+      - https://www.paradigm.xyz/api/rss
     schedule: morning
     test_group: pilot
 

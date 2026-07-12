@@ -57,10 +57,8 @@ def parse_feed(content: bytes) -> list[FeedEntry]:
     else:
         raise ValueError(f"未知的 feed 根元素: <{root_name}>")
 
-    entries = [e for e in entries if e.title or e.link]
-    if not entries and not nodes:
-        raise ValueError("feed 中没有条目")
-    return entries
+    # 合法 feed 根 + 零条目 = 真空窗口（如 arXiv 周末不放榜），交由上层标记 empty
+    return [e for e in entries if e.title or e.link]
 
 
 def _parse_rss_item(item) -> FeedEntry:

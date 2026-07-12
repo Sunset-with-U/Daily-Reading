@@ -33,6 +33,7 @@ def load_sources(path=None) -> list[SourceConfig]:
             lang=merged.get("lang", "en"),
             method=merged.get("method", "rss"),
             url=merged.get("url", ""),
+            fallback_urls=list(merged.get("fallback_urls", [])),
             parser=merged.get("parser"),
             enabled=bool(merged.get("enabled", True)),
             schedule=merged.get("schedule", "both"),

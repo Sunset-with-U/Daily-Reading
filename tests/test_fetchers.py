@@ -14,6 +14,37 @@ def test_rss_parse(fixture_response, make_ctx, make_source):
     assert first.published_at.startswith("2026-07-10")
 
 
+def test_rss_fallback_urls(monkeypatch, make_ctx, make_source, fixture_response):
+    """主 URL 404 时依次尝试 fallback_urls；主 URL 合法空 feed 不被兜底失败掩盖。"""
+    import httpx
+
+    from pipeline.fetch import http as http_mod
+    from pipeline.fetch import rss
+
+    good = fixture_response("rss/sample_feed.xml")
+    empty = type(good)(b"<rss><channel><title>t</title></channel></rss>")
+
+    def fake_get(url, **kwargs):
+        if "primary" in url:
+            raise httpx.HTTPStatusError("404", request=None, response=None)
+        if "empty" in url:
+            return empty
+        return good
+
+    monkeypatch.setattr(http_mod, "get", fake_get)
+
+    src = make_source(url="https://primary.example.com/feed.xml",
+                      fallback_urls=["https://mirror.example.com/feed.xml"])
+    result = rss.fetch(src, make_ctx())
+    assert result.status == "ok" and len(result.items) == 2
+
+    # 主 URL 空 feed + 兜底失败 → empty 而非 error
+    src2 = make_source(url="https://empty.example.com/feed.xml",
+                       fallback_urls=["https://primary.example.com/feed.xml"])
+    result2 = rss.fetch(src2, make_ctx())
+    assert result2.status == "empty"
+
+
 def test_telegram_parse(stub_http, make_ctx, make_source):
     stub_http({"t.me/s/FinancialJuice": "html/telegram_channel.html"})
     from pipeline.fetch.telegram import fetch

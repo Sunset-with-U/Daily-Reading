@@ -17,6 +17,7 @@ class SourceConfig:
     lang: str = "en"
     method: str = "rss"            # rss|json_api|html_scrape|rsshub|telegram|google_news|twitter|podcast_itunes
     url: str = ""
+    fallback_urls: list[str] = field(default_factory=list)  # 主 URL 失败时依次重试
     parser: str | None = None      # 点分引用，如 "people_daily.parse_layout"
     enabled: bool = True
     schedule: str = "both"         # both|morning|evening|weekly
