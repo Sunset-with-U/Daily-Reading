@@ -1,0 +1,4 @@
+# 桌面 App 依赖（云端 CI 只装 requirements.txt，不含 GUI 层）
+-r requirements.txt
+keyring>=25.0
+pywebview>=5.0
