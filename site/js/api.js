@@ -24,3 +24,35 @@ export const api = {
   health: () => getJSON("data/health/latest.json"),
   watchlistConf: () => getJSON("data/watchlist.json"),
 };
+
+// —— App 模式写通道（本地 loopback 服务）——
+// Pages 静态托管下 /api 不存在：status() 返回 null，设置入口保持隐藏。
+// token 来自窗口 URL ?t=（App 启动时注入），写接口凭它校验。
+const appToken = new URLSearchParams(location.search).get("t") || "";
+
+async function apiFetch(method, path, body) {
+  const resp = await fetch(path, {
+    method,
+    headers: { "Content-Type": "application/json", "X-DR-Token": appToken },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  const data = await resp.json().catch(() => null);
+  if (!resp.ok) throw new Error(data?.error || `HTTP ${resp.status}`);
+  return data;
+}
+
+export const appApi = {
+  status: async () => {
+    try {
+      const resp = await fetch("api/status", { cache: "no-cache" });
+      return resp.ok ? await resp.json() : null;
+    } catch { return null; }
+  },
+  settings: () => apiFetch("GET", "api/settings"),
+  saveSettings: (patch) => apiFetch("PUT", "api/settings", patch),
+  saveKey: (name, value) => apiFetch("PUT", "api/keys", { name, value }),
+  deleteKey: (name) => apiFetch("DELETE", "api/keys", { name }),
+  sources: () => apiFetch("GET", "api/sources"),
+  saveSources: (overlay) => apiFetch("PUT", "api/sources", overlay),
+  run: (edition) => apiFetch("POST", "api/run", edition ? { edition } : {}),
+};

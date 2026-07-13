@@ -1,5 +1,5 @@
 // 外壳：hash 路由 + 日期状态 + 主题 + Ticker Tape
-import { api } from "./api.js";
+import { api, appApi } from "./api.js";
 import { initTheme } from "./theme.js";
 import { tv } from "./widgets.js";
 import * as reportView from "./views/report.js";
@@ -8,10 +8,12 @@ import * as watchlistView from "./views/watchlist.js";
 import * as marketView from "./views/market.js";
 import * as archiveView from "./views/archive.js";
 import * as sourcesView from "./views/sources.js";
+import * as settingsView from "./views/settings.js";
 
 const VIEWS = {
   report: reportView, feed: feedView, watchlist: watchlistView,
   market: marketView, archive: archiveView, sources: sourcesView,
+  settings: settingsView,
 };
 
 const state = {
@@ -79,6 +81,12 @@ function mountTicker() {
 async function boot() {
   initTheme(() => { mountTicker(); render(); });  // 主题切换 → 重建 widget + 重绘视图
 
+  // App 模式探测：本地服务存在则亮出设置入口；Pages 静态托管保持隐藏
+  state.app = await appApi.status();
+  if (state.app) {
+    document.querySelector('#nav a[data-route="settings"]').hidden = false;
+  }
+
   state.index = await api.index();
   state.dates = (state.index?.dates || []).map((d) => d.date);
   state.date = state.index?.latest_date || state.dates[0] || null;
@@ -96,6 +104,12 @@ async function boot() {
 
   mountTicker();
   if (!state.date) {
+    if (state.app) {
+      // App 首启无数据：直接带用户去设置页配置 Key 并手动跑第一班
+      location.hash = "#/settings";
+      render();
+      return;
+    }
     document.getElementById("view").innerHTML =
       '<div class="empty">暂无数据 —— 等待第一次管线运行完成后刷新本页</div>';
     return;

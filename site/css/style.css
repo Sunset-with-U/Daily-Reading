@@ -281,3 +281,43 @@ h1, h2, h3, .serif {
   .view { padding: 18px 14px 50px; }
   .filterbar { position: static; }
 }
+
+/* ── 设置视图（仅 App 模式可见） ────────────────────────── */
+.settings-card { padding: 20px 24px; margin-bottom: 20px; }
+.settings-card h2 { font-family: var(--font-display); font-size: 1.1rem;
+  margin: 0 0 14px; color: var(--text); }
+.settings-card h3 { font-size: .92rem; margin: 18px 0 8px; color: var(--text-2); }
+.form-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; flex-wrap: wrap; }
+.form-row > label { min-width: 110px; font-size: .9rem; color: var(--text-2); }
+.form-row input[type="text"], .form-row input[type="password"],
+.form-row input[type="number"], .form-row select {
+  padding: 7px 12px; border-radius: 8px; font: inherit; font-size: .9rem;
+  color: var(--text); background: var(--surface); border: 1px solid var(--border);
+  min-width: 220px; }
+.form-row input:focus, .form-row select:focus {
+  outline: none; border-color: var(--accent); }
+.form-hint { font-size: .8rem; color: var(--text-3); }
+.form-actions { margin-top: 14px; display: flex; align-items: center; gap: 12px; }
+.btn { padding: 7px 16px; border-radius: 8px; font-size: .88rem;
+  background: var(--surface); border: 1px solid var(--border); color: var(--text); }
+.btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent-strong); }
+.btn:disabled { opacity: .4; cursor: default; }
+.btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn-primary:hover:not(:disabled) { background: var(--accent-strong);
+  border-color: var(--accent-strong); color: #fff; }
+.save-note { font-size: .82rem; color: var(--text-2); }
+.save-note.save-err { color: var(--down); }
+.key-row label { min-width: 250px; }
+.key-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--border);
+  flex: 0 0 auto; }
+.key-dot.key-set { background: var(--up); }
+.src-list { max-height: 420px; overflow-y: auto; border: 1px solid var(--border);
+  border-radius: 8px; padding: 4px 12px; margin: 8px 0; }
+.src-group summary { cursor: pointer; padding: 8px 0; font-size: .9rem;
+  color: var(--text); font-weight: 600; }
+.src-row { display: flex; align-items: baseline; gap: 8px; padding: 4px 0 4px 18px;
+  cursor: pointer; font-size: .88rem; }
+.src-row:hover { background: var(--surface); border-radius: 6px; }
+.src-name { color: var(--text); }
+.src-meta { color: var(--text-2); font-size: .78rem; overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap; }
