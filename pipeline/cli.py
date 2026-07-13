@@ -59,6 +59,12 @@ def main(argv: list[str] | None = None) -> int:
     return 2
 
 
+def _ai_available(settings: dict) -> bool:
+    from .analyze.providers import available
+
+    return available(settings)
+
+
 def _rsshub_base(settings: dict) -> str:
     """RSSHub 实例地址：环境变量（CI 服务容器）优先，其次 settings（App 面板可配）。"""
     return os.environ.get("RSSHUB_BASE", "") or str(
@@ -136,8 +142,11 @@ def cmd_run(args) -> int:
     # Stage 4: analyze ------------------------------------------------------
     if args.skip_ai:
         print("[analyze] 跳过（--skip-ai）")
-    elif not os.environ.get("ANTHROPIC_API_KEY"):
-        print("[analyze] 跳过：未配置 ANTHROPIC_API_KEY")
+    elif not _ai_available(settings):
+        from .analyze.providers import PROVIDERS, provider_of
+
+        env_key = PROVIDERS.get(provider_of(settings), {}).get("env", "API Key")
+        print(f"[analyze] 跳过：未配置 {env_key}（当前 AI 供应商 {provider_of(settings)}）")
     else:
         _guarded_stage("analyze", lambda: _run_analyze(dctx, settings, args.ai_cap))
         # Stage 5: report ---------------------------------------------------
@@ -240,8 +249,10 @@ def cmd_collect_pending() -> int:
     if not pending:
         print("[collect-pending] 无待回收的 Batch")
         return 0
-    if not os.environ.get("ANTHROPIC_API_KEY"):
-        print("[collect-pending] 未配置 ANTHROPIC_API_KEY，跳过")
+    from .analyze.providers import PROVIDERS
+
+    if not any(os.environ.get(p["env"]) for p in PROVIDERS.values()):
+        print("[collect-pending] 未配置任何 AI 供应商 Key，跳过")
         return 0
     _guarded_stage("collect-pending", _do_collect_pending)
     return 0

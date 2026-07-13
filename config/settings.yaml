@@ -17,8 +17,16 @@ dedupe:
   state_retention_days: 45      # seen_items 状态保留天数
 
 ai:
-  item_model: claude-haiku-4-5        # 逐条分析模型
-  report_model: claude-opus-4-8       # 每日报告模型（可降档为 claude-sonnet-5）
+  provider: anthropic                 # anthropic | openai | gemini | deepseek
+  mode: batch                         # batch=省钱5折(等30-75分钟) | realtime=逐条即时(约2倍价)
+                                      # 云端 CI 建议 batch；桌面 App 面板可切换
+  models:                             # 各供应商的 逐条分析/每日报告 模型（面板可改）
+    anthropic: {item: claude-haiku-4-5, report: claude-opus-4-8}
+    openai: {item: gpt-5-mini, report: gpt-5.1}
+    gemini: {item: gemini-2.5-flash, report: gemini-2.5-pro}
+    deepseek: {item: deepseek-chat, report: deepseek-reasoner}
+  item_model: claude-haiku-4-5        # （旧键，向后兼容；以 models 表为准）
+  report_model: claude-opus-4-8       # （旧键，向后兼容）
   daily_item_cap: 600                 # 每天最多送 AI 分析的条目数（成本护栏）
   item_max_tokens: 1500               # 逐条分析输出上限
   report_max_tokens: 30000            # 报告输出上限

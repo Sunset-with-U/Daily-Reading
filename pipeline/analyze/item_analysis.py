@@ -6,7 +6,7 @@ from pathlib import Path
 
 from .. import persist
 from ..datectx import DateContext
-from . import batches
+from . import batches, providers, runner
 from .schemas import ITEM_SCHEMA, clamp_item_analysis
 
 _PROMPT_FILE = Path(__file__).parent / "prompts" / "item_system.txt"
@@ -52,7 +52,7 @@ def analyze_items(dctx: DateContext, settings: dict, ai_cap: int = 0) -> str:
         return f"无需分析（今日已完成 {done_today} 条，预算 {daily_cap}）"
 
     system = _system_prompt()
-    model = ai_cfg.get("item_model", "claude-haiku-4-5")
+    model = providers.model_for(settings, "item")
     requests = []
     for item in todo:
         item.setdefault("analysis", {})
@@ -68,32 +68,14 @@ def analyze_items(dctx: DateContext, settings: dict, ai_cap: int = 0) -> str:
             },
         })
 
-    chunk_size = int(ai_cfg.get("batch_chunk_size", 10000))
-    timeout_min = int(ai_cfg.get("batch_poll_timeout_min", 75))
-    interval_s = int(ai_cfg.get("batch_poll_interval_s", 60))
-
-    stats = {"submitted": len(requests), "done": 0, "failed": 0, "timeout": 0}
-    for i in range(0, len(requests), chunk_size):
-        chunk = requests[i:i + chunk_size]
-        batch_id = batches.submit(chunk)
-        print(f"  [analyze] 已提交 batch {batch_id}（{len(chunk)} 条），等待完成 …")
-        # 先落盘 attempts 计数，防止中途被杀后重复计数丢失
-        persist.save_items_doc(dctx.date_bj, doc)
-        if batches.wait(batch_id, timeout_min, interval_s):
-            results = batches.collect(batch_id)
-            merged = _apply_results(doc, results, model)
-            stats["done"] += merged["done"]
-            stats["failed"] += merged["failed"]
-        else:
-            batches.add_pending({
-                "batch_id": batch_id, "kind": "items", "date": dctx.date_bj,
-                "edition": dctx.edition, "submitted_at": dctx.run_at_utc,
-            })
-            stats["timeout"] += len(chunk)
-            print(f"  [analyze] batch {batch_id} 超时，已登记断点续传")
+    # 先落盘 attempts 计数，防止中途被杀后重复计数丢失
     persist.save_items_doc(dctx.date_bj, doc)
-    return (f"提交 {stats['submitted']}，完成 {stats['done']}，"
-            f"失败 {stats['failed']}，待续传 {stats['timeout']}")
+    results = runner.execute(requests, settings, dctx, kind="items")
+    merged = _apply_results(doc, results, model)
+    pending = len(requests) - len(results)  # batch 超时的部分（已登记续传）
+    persist.save_items_doc(dctx.date_bj, doc)
+    return (f"提交 {len(requests)}，完成 {merged['done']}，"
+            f"失败 {merged['failed']}，待续传 {pending}")
 
 
 def _apply_results(doc: dict, results: dict[str, dict], model: str) -> dict:
@@ -127,7 +109,7 @@ def merge_results(date_bj: str, results: dict[str, dict]) -> None:
         return
     from ..cli import load_settings
 
-    model = load_settings().get("ai", {}).get("item_model", "claude-haiku-4-5")
+    model = providers.model_for(load_settings(), "item")
     merged = _apply_results(doc, results, model)
     persist.save_items_doc(date_bj, doc)
     print(f"  [collect-pending] {date_bj}: 补录 done={merged['done']} failed={merged['failed']}")

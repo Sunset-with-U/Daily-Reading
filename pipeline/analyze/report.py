@@ -7,7 +7,7 @@ from pathlib import Path
 
 from .. import persist
 from ..datectx import DateContext
-from . import batches
+from . import batches, providers, runner
 from .schemas import REPORT_SCHEMA
 
 _PROMPT_FILE = Path(__file__).parent / "prompts" / "report_system.txt"
@@ -25,14 +25,15 @@ def generate_report(dctx: DateContext, settings: dict, market: dict | None) -> s
         market = persist.load_market(dctx.date_bj)
 
     report_input, input_stats = build_report_input(dctx, settings, doc, market)
-    model = ai_cfg.get("report_model", "claude-opus-4-8")
+    model = providers.model_for(settings, "report")
     request = {
         "custom_id": f"report-{dctx.date_bj}-{dctx.edition}",
         "params": {
             "model": model,
             "max_tokens": int(ai_cfg.get("report_max_tokens", 30000)),
             # Opus 4.8 必须显式开启 adaptive thinking（省略=关闭）；
-            # 不传 temperature/top_p（该模型已移除，传了会 400）
+            # 不传 temperature/top_p（该模型已移除，传了会 400）。
+            # thinking/effort 为 Claude 专属，其他供应商在翻译层丢弃。
             "thinking": {"type": "adaptive"},
             "output_config": {
                 "effort": "high",
@@ -42,18 +43,9 @@ def generate_report(dctx: DateContext, settings: dict, market: dict | None) -> s
             "messages": [{"role": "user", "content": report_input}],
         },
     }
-    timeout_min = int(ai_cfg.get("batch_poll_timeout_min", 75))
-    interval_s = int(ai_cfg.get("batch_poll_interval_s", 60))
-    batch_id = batches.submit([request])
-    print(f"  [report] 已提交 batch {batch_id}，等待完成 …")
-    if not batches.wait(batch_id, timeout_min, interval_s):
-        batches.add_pending({
-            "batch_id": batch_id, "kind": "report", "date": dctx.date_bj,
-            "edition": dctx.edition, "submitted_at": dctx.run_at_utc,
-        })
-        return f"batch {batch_id} 超时，已登记断点续传"
-
-    results = batches.collect(batch_id)
+    results = runner.execute([request], settings, dctx, kind="report")
+    if not results:
+        return "batch 超时，已登记断点续传"
     ok = _write_report(dctx.date_bj, dctx.edition, results, model, input_stats)
     return "报告已生成" if ok else "报告生成失败（结果不可解析）"
 
@@ -62,7 +54,7 @@ def merge_report_result(date_bj: str, edition: str, results: dict[str, dict]) ->
     """断点续传回收路径。"""
     from ..cli import load_settings
 
-    model = load_settings().get("ai", {}).get("report_model", "claude-opus-4-8")
+    model = providers.model_for(load_settings(), "report")
     ok = _write_report(date_bj, edition, results, model, {})
     print(f"  [collect-pending] {date_bj}/{edition} 报告补录：{'成功' if ok else '失败'}")
 

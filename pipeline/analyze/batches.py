@@ -1,5 +1,7 @@
-"""Anthropic Batch API 封装：提交/轮询/回收 + 跨运行断点续传。
+"""Batch API 封装：提交/轮询/回收 + 跨运行断点续传。
 
+Anthropic 实现在本模块（SDK 单出口 _client，测试打桩点）；OpenAI Batch
+在 providers 模块，经 submit_for/wait_for/collect_for 按 provider 分发。
 关键性质：Batch 结果乱序返回，必须严格按 custom_id 合并（本项目
 custom_id = 条目 id = 去重主键哈希，天然幂等）。
 结果在服务端保留 29 天，本轮没等到的下一轮回收。
@@ -12,6 +14,47 @@ import time
 from ..util import STATE_DIR, load_json, save_json
 
 _PENDING_FILE = STATE_DIR / "pending_batches.json"
+
+# OpenAI Batch 的终态（completed 可回收，其余为失败终态）
+_OPENAI_DONE = {"completed", "failed", "expired", "cancelled"}
+
+
+# ── provider 分发 ───────────────────────────────────────────
+
+
+def submit_for(provider: str, requests: list[dict]) -> str:
+    if provider == "anthropic":
+        return submit(requests)
+    from . import providers
+
+    return providers.openai_batch_submit(requests)
+
+
+def wait_for(provider: str, batch_id: str, timeout_min: int,
+             interval_s: int = 60) -> bool:
+    if provider == "anthropic":
+        return wait(batch_id, timeout_min, interval_s)
+    from . import providers
+
+    deadline = time.monotonic() + timeout_min * 60
+    while True:
+        status = providers.openai_batch_status(batch_id).get("status", "")
+        if status in _OPENAI_DONE:
+            return True
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            return False
+        print(f"  [batch {batch_id[:18]}…] status={status} "
+              f"(剩余等待 {int(remaining / 60)} 分钟)")
+        time.sleep(min(interval_s, max(remaining, 1)))
+
+
+def collect_for(provider: str, batch_id: str) -> dict[str, dict]:
+    if provider == "anthropic":
+        return collect(batch_id)
+    from . import providers
+
+    return providers.openai_batch_collect(batch_id)
 
 
 def _client():
@@ -89,28 +132,45 @@ def add_pending(entry: dict) -> None:
 
 
 def collect_pending() -> str:
-    """回收全部已完成的 pending batch，合并回对应日期文件。"""
+    """回收全部已完成的 pending batch，合并回对应日期文件。
+
+    entry 可带 provider 字段（缺省按 anthropic，兼容历史登记）；
+    对应供应商 Key 缺失的条目原样保留，等 Key 恢复后再回收。
+    """
+    from . import providers
+
     pending = load_json(_PENDING_FILE, []) or []
     if not pending:
         return "无待回收"
-    client = _client()
     still_pending: list[dict] = []
     done, expired = 0, 0
     for entry in pending:
+        provider = entry.get("provider", "anthropic")
+        if not providers.key_available(provider):
+            still_pending.append(entry)
+            continue
         try:
-            batch = client.messages.batches.retrieve(entry["batch_id"])
+            ended = _batch_ended(provider, entry["batch_id"])
         except Exception as exc:  # noqa: BLE001 — 批次可能已过期/被删
             print(f"  [collect-pending] {entry['batch_id']} 无法获取：{exc}，丢弃")
             expired += 1
             continue
-        if batch.processing_status != "ended":
+        if not ended:
             still_pending.append(entry)
             continue
-        results = collect(entry["batch_id"])
+        results = collect_for(provider, entry["batch_id"])
         _merge_pending(entry, results)
         done += 1
     save_json(_PENDING_FILE, still_pending)
     return f"回收 {done} 个，仍在处理 {len(still_pending)} 个，失效 {expired} 个"
+
+
+def _batch_ended(provider: str, batch_id: str) -> bool:
+    if provider == "anthropic":
+        return _client().messages.batches.retrieve(batch_id).processing_status == "ended"
+    from . import providers
+
+    return providers.openai_batch_status(batch_id).get("status", "") in _OPENAI_DONE
 
 
 def _merge_pending(entry: dict, results: dict[str, dict]) -> None:
