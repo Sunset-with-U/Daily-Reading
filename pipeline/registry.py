@@ -7,7 +7,7 @@ from typing import Callable
 import yaml
 
 from .models import FetchContext, FetchResult, SourceConfig
-from .util import CONFIG_DIR
+from .util import CONFIG_DIR, USER_CONFIG_DIR
 
 VALID_METHODS = {
     "rss", "json_api", "html_scrape", "rsshub", "telegram",
@@ -20,10 +20,11 @@ VALID_SCHEDULES = {"both", "morning", "evening", "weekly"}
 def load_sources(path=None) -> list[SourceConfig]:
     raw = yaml.safe_load((path or CONFIG_DIR / "sources.yaml").read_text(encoding="utf-8"))
     defaults = raw.get("defaults", {})
+    overrides, extra = _load_user_overlay() if path is None else ({}, [])
     sources: list[SourceConfig] = []
     seen_ids: set[str] = set()
-    for entry in raw.get("sources", []):
-        merged = {**defaults, **entry}
+    for entry in raw.get("sources", []) + extra:
+        merged = {**defaults, **entry, **overrides.get(entry.get("id", ""), {})}
         src = SourceConfig(
             id=merged["id"],
             name=merged.get("name", ""),
@@ -47,6 +48,19 @@ def load_sources(path=None) -> list[SourceConfig]:
         seen_ids.add(src.id)
         sources.append(src)
     return sources
+
+
+def _load_user_overlay() -> tuple[dict, list]:
+    """用户源覆盖层 sources_user.yaml（App 设置面板写入）：
+
+    overrides:       {源id: {enabled: false, url: ..., ...}}   # 覆盖出厂条目字段
+    extra_sources:   [完整源条目, ...]                          # 用户自定义源
+    """
+    path = USER_CONFIG_DIR / "sources_user.yaml"
+    if not path.exists():
+        return {}, []
+    doc = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    return dict(doc.get("overrides") or {}), list(doc.get("extra_sources") or [])
 
 
 def _validate(src: SourceConfig, seen_ids: set[str]) -> None:

@@ -2,18 +2,36 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
+# 桌面 App 通过这两个环境变量把数据/配置重定向到用户目录
+# （必须在 import pipeline 之前设置——dedupe/batches 的模块级常量随此求值）；
+# 云端 CI 不设置，回落仓库根，行为与既往一致。
 REPO_ROOT = Path(__file__).resolve().parent.parent
-DATA_DIR = REPO_ROOT / "data"
+DATA_DIR = Path(os.environ.get("DAILY_READING_DATA_DIR", "") or REPO_ROOT / "data")
 STATE_DIR = DATA_DIR / "state"
-CONFIG_DIR = REPO_ROOT / "config"
+CONFIG_DIR = Path(os.environ.get("DAILY_READING_CONFIG_DIR", "") or REPO_ROOT / "config")
+# 用户配置覆盖层目录（App 设置面板写这里）；未设置时与 CONFIG_DIR 相同，
+# 此时 *_user.yaml 与出厂文件同目录（开发/云端模式天然无覆盖文件）。
+USER_CONFIG_DIR = Path(os.environ.get("DAILY_READING_USER_CONFIG_DIR", "") or CONFIG_DIR)
 
 _TRACKING_PARAMS = re.compile(r"^(utm_|fbclid|gclid|ref$|ref_|spm)", re.I)
 _WS = re.compile(r"\s+")
+
+
+def deep_merge(base: dict, override: dict) -> dict:
+    """递归字典合并：override 键胜出，仅 dict 递归，其余类型整值替换。返回新 dict。"""
+    out = dict(base)
+    for k, v in override.items():
+        if isinstance(v, dict) and isinstance(out.get(k), dict):
+            out[k] = deep_merge(out[k], v)
+        else:
+            out[k] = v
+    return out
 
 
 def load_json(path: Path, default: Any = None) -> Any:

@@ -114,12 +114,19 @@ def update_failure_counters(results: list[FetchResult]) -> dict[str, int]:
 
 
 def write_watchlist_export() -> None:
-    """把 config/watchlist.yaml 导出为 data/watchlist.json 供看板使用。"""
+    """把自选清单导出为 data/watchlist.json 供看板使用。
+
+    用户层 watchlist_user.yaml 存在则整文件替换出厂 watchlist.yaml
+    （自选清单是个人列表，深合并没有意义）。
+    """
     import yaml
 
-    from .util import CONFIG_DIR
+    from .util import CONFIG_DIR, USER_CONFIG_DIR
 
-    doc = yaml.safe_load((CONFIG_DIR / "watchlist.yaml").read_text(encoding="utf-8"))
+    path = USER_CONFIG_DIR / "watchlist_user.yaml"
+    if not path.exists():
+        path = CONFIG_DIR / "watchlist.yaml"
+    doc = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
     save_json(DATA_DIR / "watchlist.json", {"tickers": doc.get("tickers", [])})
 
 

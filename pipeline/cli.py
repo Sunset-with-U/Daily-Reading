@@ -15,11 +15,17 @@ from . import datectx, persist
 from .dedupe import SeenStore, primary_key
 from .models import FetchContext
 from .registry import load_sources, select_sources
-from .util import CONFIG_DIR, STATE_DIR, load_json
+from .util import CONFIG_DIR, STATE_DIR, USER_CONFIG_DIR, deep_merge, load_json
 
 
 def load_settings() -> dict:
-    return yaml.safe_load((CONFIG_DIR / "settings.yaml").read_text(encoding="utf-8"))
+    """出厂 settings.yaml + 用户覆盖层 settings_user.yaml（深合并，用户键胜出）。"""
+    settings = yaml.safe_load((CONFIG_DIR / "settings.yaml").read_text(encoding="utf-8"))
+    user_file = USER_CONFIG_DIR / "settings_user.yaml"
+    if user_file.exists():
+        overlay = yaml.safe_load(user_file.read_text(encoding="utf-8")) or {}
+        settings = deep_merge(settings, overlay)
+    return settings
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -53,6 +59,12 @@ def main(argv: list[str] | None = None) -> int:
     return 2
 
 
+def _rsshub_base(settings: dict) -> str:
+    """RSSHub 实例地址：环境变量（CI 服务容器）优先，其次 settings（App 面板可配）。"""
+    return os.environ.get("RSSHUB_BASE", "") or str(
+        settings.get("fetch", {}).get("rsshub_base", "") or "")
+
+
 # ──────────────────────────────────────────────────────────────
 def cmd_run(args) -> int:
     settings = load_settings()
@@ -67,7 +79,7 @@ def cmd_run(args) -> int:
 
     ctx = FetchContext(
         settings=settings,
-        rsshub_base=os.environ.get("RSSHUB_BASE", ""),
+        rsshub_base=_rsshub_base(settings),
         date_bj=dctx.date_bj,
         edition=dctx.edition,
         verbose=args.verbose,
@@ -189,7 +201,7 @@ def _run_report(dctx, settings, market):
 def cmd_health(args) -> int:
     settings = load_settings()
     dctx = datectx.build()
-    ctx = FetchContext(settings=settings, rsshub_base=os.environ.get("RSSHUB_BASE", ""),
+    ctx = FetchContext(settings=settings, rsshub_base=_rsshub_base(settings),
                        date_bj=dctx.date_bj, edition=dctx.edition, verbose=args.verbose)
     sources = load_sources()
     from .fetch import run_fetch

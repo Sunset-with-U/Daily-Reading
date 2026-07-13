@@ -3,6 +3,8 @@
 # ============================================================
 
 fetch:
+  rsshub_base: ""               # RSSHub 实例地址；CI 由 RSSHUB_BASE 环境变量注入（优先），
+                                # 桌面 App 在设置面板配置（如 https://rsshub.app）
   timeout_s: 20                 # 单源 HTTP 超时（秒）
   max_items_per_source: 30      # 每源每次运行最多取多少条（去重前）
   workers: 16                   # 抓取并发线程数
