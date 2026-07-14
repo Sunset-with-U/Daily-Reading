@@ -2,9 +2,16 @@
 
 面向职业交易员与量化研究者的**全自动每日情报管线**：每天两班（北京 07:00 早报 / 20:00 晚报）从 120+ 个高质量信息源抓取内容，由 Claude 逐条打标签、评级、写摘要与影响推演，再生成一份深度中文市场报告与关注清单，最终发布成一个可随手翻阅的静态看板。
 
-**零服务器、零数据库**——整套系统只靠 GitHub Actions（定时管线）+ GitHub Pages（静态看板）运行，唯一的持续成本是 Claude API（约 $35–50/月，全部走 Batch API 五折通道，护栏旋钮齐全）。
+**零服务器、零数据库**——整套系统只靠 GitHub Actions（定时管线）+ GitHub Pages（静态看板）运行，唯一的持续成本是 AI API（默认 Claude，约 $35–50/月，走 Batch 五折通道，护栏旋钮齐全）。
 
 > 🚀 想自己部署一套？照着 **[SETUP.md](SETUP.md)** 一步步来，全程约 15 分钟，不需要编程经验。
+
+## 两种使用形态
+
+- **macOS 桌面 App**（v2 新增，个人使用推荐）：从 Releases 下载 `.dmg` 拖进「应用程序」即可。API Key 粘在设置面板里（存进本机钥匙串，界面永不回显明文）；菜单栏常驻，北京 07:00 / 20:00 本机自动运行、错过班次自动补跑、完成弹系统通知。还可在面板切换 AI 供应商（**Claude / ChatGPT / Gemini / DeepSeek** 四家任选）、启停或新增信息源、选择实时或省钱 Batch 模式。安装与打包细节见 [docs/PACKAGING.md](docs/PACKAGING.md)。
+- **云端模式**：GitHub Actions 定时管线 + Pages 网页看板，照 [SETUP.md](SETUP.md) 配置，适合想要 7×24 全自动与随处可访问的看板。
+
+两种形态共用同一套管线核心与看板代码：桌面 App 把数据与配置写到本机用户目录，云端模式的行为与文件一字不动。
 
 ## 它每天为你做什么
 
@@ -37,12 +44,14 @@ GitHub Actions（UTC 23:00 → 北京 07:00 早报；UTC 12:00 → 北京 20:00 
 ```
 config/          sources.yaml（源注册表）· watchlist.yaml（自选清单）· settings.yaml（成本护栏）
 pipeline/        管线本体：fetch/（8 种抓取器）· parsers/（站点解析器）·
-                 enrich/（市场数据）· analyze/（AI 分析与报告）
-site/            纯静态看板（无构建步骤）：hash 路由六视图 + Claude 双主题
-data/            仅由 CI 写入：每日 JSON + index + 运行状态
+                 enrich/（市场数据）· analyze/（AI 分析与报告，多供应商适配）
+site/            纯静态看板（无构建步骤）：hash 路由七视图 + Claude 双主题
+app/             macOS 桌面壳：本地服务 · 钥匙串密钥 · 定时调度 · 菜单栏（云端 CI 不加载）
+daily_reading/   Briefcase 打包入口 shim（转调 app/main.py）
+data/            仅由 CI / 桌面 App 写入：每日 JSON + index + 运行状态
 scripts/         本地预览（preview.sh）· mock 数据 · 源文档生成
-docs/            sources.md——全部信息源清单（自动生成）
-.github/workflows/   daily.yml（每日两班）· health.yml（每周源探活）
+docs/            sources.md（信息源清单）· PACKAGING.md（打包与发布指南）
+.github/workflows/   daily.yml（每日两班）· health.yml（每周源探活）· release.yml（App 打包发布）
 ```
 
 ## 成本与护栏
@@ -62,6 +71,10 @@ docs/            sources.md——全部信息源清单（自动生成）
 pip install -r requirements.txt
 python -m pytest              # 单测（全部离线 fixture，不出网）
 bash scripts/preview.sh       # 起本地看板：有真实 data/ 用真实数据，否则自动生成 mock
+
+# 桌面形态（开发模式，macOS/Linux 均可起服务）
+pip install -r requirements-app.txt
+python -m app.server          # 本地服务 + 设置面板，浏览器打开打印出的地址
 ```
 
 ## 合规与免责声明

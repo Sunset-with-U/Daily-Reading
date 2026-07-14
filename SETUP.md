@@ -2,6 +2,8 @@
 
 照着下面四步做，就能让这套系统每天自动为你工作。全程只需要浏览器，大约 15 分钟。
 
+> 🖥️ **只想在自己的 Mac 上用？可以跳过本指南。** 去仓库 **Releases** 页下载 macOS 桌面 App（`.dmg`），拖进「应用程序」后在设置面板粘贴 API Key 即可（密钥存进本机钥匙串，不经过 GitHub）。桌面 App 支持 Claude / ChatGPT / Gemini / DeepSeek 四家任选，安装说明见 [docs/PACKAGING.md](docs/PACKAGING.md)。本指南其余部分讲的是**云端模式**（GitHub Actions 定时管线 + Pages 网页看板）。
+
 > 名词速览：**Secret** = 存在 GitHub 仓库里的加密密钥，工作流运行时才能读到，任何人（包括访客）都看不见；**Actions** = GitHub 提供的免费定时任务机器人；**Pages** = GitHub 提供的免费静态网站托管。
 
 ---
