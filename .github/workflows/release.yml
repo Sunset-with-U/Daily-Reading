@@ -1,0 +1,54 @@
+# 桌面 App 发布通道：在 macOS runner 上用 Briefcase 打出 .app/.dmg。
+# 与云端数据管线（daily.yml / health.yml）完全独立，互不影响。
+#
+# 触发：手动 workflow_dispatch，或推送 v* 标签（如 v2.0.0）。
+# 产物：Actions artifact 永远上传；tag 触发时额外挂到 draft Release。
+# 无签名证书时用 ad-hoc 签名（用户首次右键打开即可），
+# 接入 Developer ID 签名/公证的步骤见 docs/PACKAGING.md。
+name: release
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write   # tag 触发时创建 draft Release 并挂 .dmg
+
+jobs:
+  build-macos:
+    runs-on: macos-14   # Apple Silicon；与 pyproject universal_build=false 匹配
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: 安装 Briefcase
+        run: python -m pip install --upgrade pip briefcase
+
+      - name: 生成应用骨架（briefcase create）
+        run: briefcase create macOS
+
+      - name: 构建 .app（briefcase build）
+        run: briefcase build macOS
+
+      - name: 打包 .dmg（ad-hoc 签名）
+        run: briefcase package macOS --adhoc-sign
+
+      - name: 上传构建产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: Daily-Reading-macOS
+          path: dist/*.dmg
+          if-no-files-found: error
+
+      - name: 挂到 draft Release（仅 tag 触发）
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.dmg
+          draft: true
+          generate_release_notes: true
