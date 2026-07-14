@@ -48,6 +48,32 @@ def test_openai_body_translation():
     assert "thinking" not in json.dumps(body)  # Claude 专属字段已剥离
 
 
+def test_model_for_unknown_provider_and_explicit_provider(capsys):
+    # 未知 provider 回退 anthropic（collect-pending 不能因面板手滑崩溃）
+    bad = {"ai": {"provider": "azure"}}
+    assert providers.model_for(bad, "item") == "claude-haiku-4-5"
+    assert "未知的 ai.provider" in capsys.readouterr().out
+    # 显式 provider（断点续传按 entry.provider 解析归属）优先于 settings
+    assert providers.model_for(FACTORY, "item", provider="deepseek") == "deepseek-chat"
+
+
+def test_gemini_schema_translates_null_anyof():
+    # ITEM_SCHEMA.deep 的 anyOf:[{type:null}, obj] → obj + nullable（Gemini 无 null 类型）
+    body = providers.gemini_body(_PARAMS)
+    deep = body["generationConfig"]["responseSchema"]["properties"]["deep"]
+    assert "anyOf" not in deep
+    assert deep.get("nullable") is True
+    assert deep.get("type") == "object"
+
+
+def test_deepseek_reasoner_alignment():
+    params = {**_PARAMS, "model": "deepseek-reasoner", "max_tokens": 30000}
+    body = providers.deepseek_body(params)
+    assert "response_format" not in body  # reasoner 不支持 json_object
+    assert body["max_tokens"] == 8192     # 上限收紧
+    assert "JSON Schema" in body["messages"][0]["content"]  # 提示词约束仍在
+
+
 def test_gemini_body_translation():
     body = providers.gemini_body(_PARAMS)
     assert body["systemInstruction"]["parts"][0]["text"] == "系统提示"
@@ -142,7 +168,7 @@ def test_factory_item_request_contract(tmp_path, monkeypatch):
 
     captured = {}
 
-    def fake_execute(requests, settings, dctx, kind):
+    def fake_execute(requests, settings, dctx, kind, on_results=None):
         captured["requests"], captured["kind"] = requests, kind
         return {}
 

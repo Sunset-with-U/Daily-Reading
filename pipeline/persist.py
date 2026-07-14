@@ -123,10 +123,15 @@ def write_watchlist_export() -> None:
 
     from .util import CONFIG_DIR, USER_CONFIG_DIR
 
-    path = USER_CONFIG_DIR / "watchlist_user.yaml"
-    if not path.exists():
-        path = CONFIG_DIR / "watchlist.yaml"
-    doc = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    doc = None
+    user_file = USER_CONFIG_DIR / "watchlist_user.yaml"
+    if user_file.exists():
+        try:
+            doc = yaml.safe_load(user_file.read_text(encoding="utf-8"))
+        except Exception as exc:  # noqa: BLE001 — 用户文件坏了退回出厂清单
+            print(f"[watchlist] 用户清单无效已忽略：{exc}")
+    if not isinstance(doc, dict):
+        doc = yaml.safe_load((CONFIG_DIR / "watchlist.yaml").read_text(encoding="utf-8"))
     save_json(DATA_DIR / "watchlist.json", {"tickers": doc.get("tickers", [])})
 
 

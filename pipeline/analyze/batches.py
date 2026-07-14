@@ -174,14 +174,16 @@ def _batch_ended(provider: str, batch_id: str) -> bool:
 
 
 def _merge_pending(entry: dict, results: dict[str, dict]) -> None:
+    provider = entry.get("provider", "anthropic")
     if entry["kind"] == "items":
         from .item_analysis import merge_results
 
-        merge_results(entry["date"], results)
+        merge_results(entry["date"], results, provider=provider)
     elif entry["kind"] == "report":
         from .report import merge_report_result
 
-        merge_report_result(entry["date"], entry["edition"], results)
+        merge_report_result(entry["date"], entry["edition"], results,
+                            provider=provider)
     # 回收后刷新索引（重要性统计会变化）
     from .. import persist
     from ..datectx import build

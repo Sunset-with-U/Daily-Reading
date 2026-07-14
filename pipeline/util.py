@@ -24,9 +24,15 @@ _WS = re.compile(r"\s+")
 
 
 def deep_merge(base: dict, override: dict) -> dict:
-    """递归字典合并：override 键胜出，仅 dict 递归，其余类型整值替换。返回新 dict。"""
+    """递归字典合并：override 键胜出，仅 dict 递归，其余类型整值替换。返回新 dict。
+
+    override 值为 None 时不覆盖（用户 YAML 里留了个空节头 `fetch:` 解析为
+    None——按"没写"处理，避免把出厂 dict 整段抹掉后下游 .get 崩溃）。
+    """
     out = dict(base)
     for k, v in override.items():
+        if v is None and k in out:
+            continue
         if isinstance(v, dict) and isinstance(out.get(k), dict):
             out[k] = deep_merge(out[k], v)
         else:

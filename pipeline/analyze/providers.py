@@ -55,11 +55,18 @@ def key_available(provider: str) -> bool:
     return bool(info and os.environ.get(info["env"]))
 
 
-def model_for(settings: dict, kind: str) -> str:
+def model_for(settings: dict, kind: str, provider: str | None = None) -> str:
     """kind: "item"|"report"。models 表缺失时回退旧键（item_model/report_model），
-    保证既有 settings fixture 与云端出厂配置不变。"""
+    保证既有 settings fixture 与云端出厂配置不变。
+
+    provider 显式传入时优先（断点续传补录按 pending entry 的 provider 解析
+    模型归属，与当前面板选择无关）；未知 provider 回退 anthropic 并告警。
+    """
     ai = settings.get("ai", {})
-    provider = provider_of(settings)
+    provider = provider or provider_of(settings)
+    if provider not in PROVIDERS:
+        print(f"  [providers] 未知的 ai.provider={provider!r}，按 anthropic 处理")
+        provider = "anthropic"
     table = (ai.get("models") or {}).get(provider) or {}
     if table.get(kind):
         return table[kind]
@@ -145,8 +152,20 @@ def gemini_body(params: dict) -> dict:
 
 
 def _gemini_schema(schema):
-    """Gemini responseSchema 不接受 additionalProperties/$schema 等键，递归剥除。"""
+    """Gemini responseSchema（OpenAPI 子集）翻译：
+
+    - 剥除不支持的 additionalProperties/$schema
+    - anyOf: [{type: null}, X] → X + nullable: true（Gemini 无 "null" 类型；
+      ITEM_SCHEMA.deep 正是这个形状）
+    """
     if isinstance(schema, dict):
+        branches = schema.get("anyOf")
+        if branches:
+            non_null = [b for b in branches if b.get("type") != "null"]
+            if len(non_null) == 1 and len(non_null) < len(branches):
+                out = _gemini_schema(non_null[0])
+                out["nullable"] = True
+                return out
         return {k: _gemini_schema(v) for k, v in schema.items()
                 if k not in ("additionalProperties", "$schema")}
     if isinstance(schema, list):
@@ -156,7 +175,11 @@ def _gemini_schema(schema):
 
 def deepseek_body(params: dict) -> dict:
     """DeepSeek：OpenAI 兼容但无 json_schema 严格模式——降级 json_object +
-    在 system 末尾追加 schema 文本约束，最终由 clamp/parse 兜底校验。"""
+    在 system 末尾追加 schema 文本约束，最终由 clamp/parse 兜底校验。
+
+    deepseek-reasoner 不支持 response_format（只能靠提示词约束）；
+    max_tokens 上限 8192，超出请求会被拒，就地收紧。
+    """
     system = params.get("system", "")
     schema = _schema_of(params)
     if schema:
@@ -165,11 +188,11 @@ def deepseek_body(params: dict) -> dict:
                    + json.dumps(schema, ensure_ascii=False))
     body = {
         "model": params["model"],
-        "max_tokens": params.get("max_tokens", 4096),
+        "max_tokens": min(int(params.get("max_tokens", 4096)), 8192),
         "messages": ([{"role": "system", "content": system}] if system else [])
         + list(params.get("messages", [])),
     }
-    if schema:
+    if schema and "reasoner" not in params["model"]:
         body["response_format"] = {"type": "json_object"}
     return body
 

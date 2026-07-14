@@ -46,15 +46,19 @@ def generate_report(dctx: DateContext, settings: dict, market: dict | None) -> s
     results = runner.execute([request], settings, dctx, kind="report")
     if not results:
         return "batch 超时，已登记断点续传"
+    res = next(iter(results.values()))
+    if "error" in res:
+        return f"报告生成失败（{res['error']}），下一班次将重新生成"
     ok = _write_report(dctx.date_bj, dctx.edition, results, model, input_stats)
     return "报告已生成" if ok else "报告生成失败（结果不可解析）"
 
 
-def merge_report_result(date_bj: str, edition: str, results: dict[str, dict]) -> None:
-    """断点续传回收路径。"""
+def merge_report_result(date_bj: str, edition: str, results: dict[str, dict],
+                        provider: str | None = None) -> None:
+    """断点续传回收路径（provider 来自 pending entry，见 merge_results）。"""
     from ..cli import load_settings
 
-    model = providers.model_for(load_settings(), "report")
+    model = providers.model_for(load_settings(), "report", provider=provider)
     ok = _write_report(date_bj, edition, results, model, {})
     print(f"  [collect-pending] {date_bj}/{edition} 报告补录：{'成功' if ok else '失败'}")
 

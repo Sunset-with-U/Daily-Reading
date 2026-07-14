@@ -71,6 +71,35 @@ def test_batch_unsupported_provider_downgrades_to_realtime(monkeypatch, capsys):
     assert "降级实时" in capsys.readouterr().out
 
 
+def test_batch_terminal_incomplete_backfills_errors(tmp_path, monkeypatch):
+    """终态但结果不全（OpenAI failed/expired）：缺席条目显式记败而非无声消失。"""
+    monkeypatch.setattr(batches, "_PENDING_FILE", tmp_path / "pending.json")
+    monkeypatch.setattr(batches, "submit_for", lambda p, reqs: "batch-x")
+    monkeypatch.setattr(batches, "wait_for", lambda p, bid, t, i: True)
+    monkeypatch.setattr(batches, "collect_for",
+                        lambda p, bid: {"aaa": {"ok": "text"}})  # bbb 缺席
+    chunks_seen = []
+    settings = {"ai": {"provider": "openai", "mode": "batch"}}
+    results = runner.execute(_REQS, settings, _dctx(), kind="items",
+                             on_results=chunks_seen.append)
+    assert results["aaa"] == {"ok": "text"}
+    assert results["bbb"] == {"error": "batch_incomplete"}
+    assert not (tmp_path / "pending.json").exists()  # 终态不登记 pending
+    assert chunks_seen and "bbb" in chunks_seen[0]   # 每 chunk 回调含补记的失败
+
+
+def test_unknown_mode_defaults_to_batch(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(batches, "_PENDING_FILE", tmp_path / "pending.json")
+    monkeypatch.setattr(batches, "submit_for", lambda p, reqs: "batch-y")
+    monkeypatch.setattr(batches, "wait_for", lambda p, bid, t, i: True)
+    monkeypatch.setattr(batches, "collect_for",
+                        lambda p, bid: {r["custom_id"]: {"ok": "t"} for r in _REQS})
+    settings = {"ai": {"provider": "anthropic", "mode": "Batch"}}  # 大小写手滑
+    results = runner.execute(_REQS, settings, _dctx(), kind="items")
+    assert len(results) == 2
+    assert "未知的 ai.mode" in capsys.readouterr().out
+
+
 def test_collect_pending_skips_entries_without_key(tmp_path, monkeypatch):
     """openai pending 但无 OPENAI_API_KEY → 原样保留，不丢弃。"""
     from pipeline.util import load_json, save_json

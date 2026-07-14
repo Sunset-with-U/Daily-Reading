@@ -15,20 +15,31 @@ _REALTIME_WORKERS = 4
 
 
 def execute(requests: list[dict], settings: dict, dctx: DateContext,
-            kind: str) -> dict[str, dict]:
-    """kind: "items"|"report"（登记 pending 时用于回收分发）。"""
+            kind: str, on_results=None) -> dict[str, dict]:
+    """kind: "items"|"report"（登记 pending 时用于回收分发）。
+
+    on_results: 可选回调，batch 模式下每个 chunk 回收完立即调用（增量落盘用，
+    进程被杀不丢已付费结果）；实时模式在全部完成后调用一次。
+    调用方对同一结果重复合并必须幂等（_apply_results 满足）。
+    """
     if not requests:
         return {}
     ai_cfg = settings.get("ai", {})
     provider = providers.provider_of(settings)
     mode = ai_cfg.get("mode", "batch")
+    if mode not in ("batch", "realtime"):
+        print(f"  [runner] 未知的 ai.mode={mode!r}，按出厂默认 batch 执行")
+        mode = "batch"
     if mode == "batch" and not providers.supports_batch(provider):
         print(f"  [runner] {provider} 暂不支持 Batch，降级实时调用")
         mode = "realtime"
 
     if mode == "batch":
-        return _execute_batch(requests, settings, dctx, kind, provider)
-    return _execute_realtime(requests, provider)
+        return _execute_batch(requests, settings, dctx, kind, provider, on_results)
+    results = _execute_realtime(requests, provider)
+    if on_results:
+        on_results(results)
+    return results
 
 
 def _execute_realtime(requests: list[dict], provider: str) -> dict[str, dict]:
@@ -42,7 +53,7 @@ def _execute_realtime(requests: list[dict], provider: str) -> dict[str, dict]:
 
 
 def _execute_batch(requests: list[dict], settings: dict, dctx: DateContext,
-                   kind: str, provider: str) -> dict[str, dict]:
+                   kind: str, provider: str, on_results=None) -> dict[str, dict]:
     ai_cfg = settings.get("ai", {})
     chunk_size = int(ai_cfg.get("batch_chunk_size", 10000))
     timeout_min = int(ai_cfg.get("batch_poll_timeout_min", 75))
@@ -54,7 +65,15 @@ def _execute_batch(requests: list[dict], settings: dict, dctx: DateContext,
         batch_id = batches.submit_for(provider, chunk)
         print(f"  [runner] 已提交 {provider} batch {batch_id}（{len(chunk)} 条），等待完成 …")
         if batches.wait_for(provider, batch_id, timeout_min, interval_s):
-            results.update(batches.collect_for(provider, batch_id))
+            chunk_results = batches.collect_for(provider, batch_id)
+            # 终态但结果不全（OpenAI failed/expired/cancelled）：缺席条目显式记败，
+            # 维持不变量"每个提交的 custom_id 要么在结果里、要么在 pending 里"
+            # （attempts<3 重试机制会在下轮自动重提这些条目）
+            for r in chunk:
+                chunk_results.setdefault(r["custom_id"], {"error": "batch_incomplete"})
+            results.update(chunk_results)
+            if on_results:
+                on_results(chunk_results)
         else:
             batches.add_pending({
                 "batch_id": batch_id, "provider": provider, "kind": kind,

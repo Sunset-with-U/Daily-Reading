@@ -18,14 +18,49 @@ VALID_SCHEDULES = {"both", "morning", "evening", "weekly"}
 
 
 def load_sources(path=None) -> list[SourceConfig]:
+    """出厂注册表 + 用户覆盖层。
+
+    出厂条目非法照旧抛错（CI 已验证的仓库输入，坏了必须暴露）；
+    用户层（overrides/extra_sources）非法只告警降级——坏覆盖回退出厂配置、
+    坏自定义源跳过，绝不击穿 fail-open 管线。
+    """
     raw = yaml.safe_load((path or CONFIG_DIR / "sources.yaml").read_text(encoding="utf-8"))
     defaults = raw.get("defaults", {})
     overrides, extra = _load_user_overlay() if path is None else ({}, [])
     sources: list[SourceConfig] = []
     seen_ids: set[str] = set()
-    for entry in raw.get("sources", []) + extra:
-        merged = {**defaults, **entry, **overrides.get(entry.get("id", ""), {})}
-        src = SourceConfig(
+    for entry in raw.get("sources", []):
+        override = overrides.get(entry.get("id", ""))
+        try:
+            src = _build(defaults, entry, override, seen_ids)
+        except Exception as exc:  # noqa: BLE001 — 仅当用户覆盖引入问题时降级
+            if override is None:
+                raise
+            print(f"[registry] 源 {entry.get('id')} 的用户覆盖无效已忽略：{exc}")
+            src = _build(defaults, entry, None, seen_ids)
+        seen_ids.add(src.id)
+        sources.append(src)
+    for entry in extra:
+        try:
+            src = _build(defaults, entry, None, seen_ids)
+        except Exception as exc:  # noqa: BLE001 — 用户自定义源坏了跳过
+            print(f"[registry] 自定义源 {entry.get('id', '?')} 无效已跳过：{exc}")
+            continue
+        seen_ids.add(src.id)
+        sources.append(src)
+    return sources
+
+
+def _build(defaults: dict, entry: dict, override: dict | None,
+           seen_ids: set[str]) -> SourceConfig:
+    merged = {**defaults, **entry, **(override or {})}
+    src = _construct(merged)
+    _validate(src, seen_ids)
+    return src
+
+
+def _construct(merged: dict) -> SourceConfig:
+    return SourceConfig(
             id=merged["id"],
             name=merged.get("name", ""),
             name_zh=merged.get("name_zh", ""),
@@ -44,10 +79,35 @@ def load_sources(path=None) -> list[SourceConfig]:
             handles=list(merged.get("handles", [])),
             notes=merged.get("notes", ""),
         )
-        _validate(src, seen_ids)
-        seen_ids.add(src.id)
-        sources.append(src)
-    return sources
+
+
+def validate_overlay(overrides: dict, extra_sources: list) -> list[str]:
+    """严格校验用户覆盖层（设置面板保存前调用），返回错误说明列表。
+
+    运行期 load_sources 对坏覆盖是优雅降级；保存入口则必须把问题
+    直接告诉用户，不允许静默落盘。
+    """
+    raw = yaml.safe_load((CONFIG_DIR / "sources.yaml").read_text(encoding="utf-8"))
+    defaults = raw.get("defaults", {})
+    factory = {e.get("id"): e for e in raw.get("sources", [])}
+    errors: list[str] = []
+    seen = set(factory)
+    for sid, ov in (overrides or {}).items():
+        entry = factory.get(sid)
+        if entry is None:
+            errors.append(f"覆盖了不存在的源 id：{sid}")
+            continue
+        try:
+            _build(defaults, entry, ov, seen - {sid})
+        except Exception as exc:  # noqa: BLE001 — 收集为用户可读错误
+            errors.append(f"{sid}: {exc}")
+    for entry in extra_sources or []:
+        try:
+            src = _build(defaults, entry, None, seen)
+            seen.add(src.id)
+        except Exception as exc:  # noqa: BLE001
+            errors.append(f"{entry.get('id', '（缺 id）')}: {exc}")
+    return errors
 
 
 def _load_user_overlay() -> tuple[dict, list]:
@@ -55,12 +115,18 @@ def _load_user_overlay() -> tuple[dict, list]:
 
     overrides:       {源id: {enabled: false, url: ..., ...}}   # 覆盖出厂条目字段
     extra_sources:   [完整源条目, ...]                          # 用户自定义源
+
+    文件损坏只告警并忽略（可写文件不得击穿管线）。
     """
     path = USER_CONFIG_DIR / "sources_user.yaml"
     if not path.exists():
         return {}, []
-    doc = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
-    return dict(doc.get("overrides") or {}), list(doc.get("extra_sources") or [])
+    try:
+        doc = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+        return dict(doc.get("overrides") or {}), list(doc.get("extra_sources") or [])
+    except Exception as exc:  # noqa: BLE001
+        print(f"[registry] sources_user.yaml 无效已忽略：{exc}")
+        return {}, []
 
 
 def _validate(src: SourceConfig, seen_ids: set[str]) -> None:

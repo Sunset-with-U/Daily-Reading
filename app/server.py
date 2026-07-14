@@ -183,21 +183,15 @@ def _make_handler(state: AppState):
             body = self._body()
             doc = {"overrides": body.get("overrides") or {},
                    "extra_sources": body.get("extra_sources") or []}
+            # 保存前严格校验（运行期对坏覆盖是优雅降级，但保存入口必须直接报错）
+            from pipeline.registry import validate_overlay
+
+            errors = validate_overlay(doc["overrides"], doc["extra_sources"])
+            if errors:
+                return self._error(400, "源配置无效：" + "；".join(errors))
             overlay_file = state.paths["user_config"] / "sources_user.yaml"
-            previous = overlay_file.read_text(encoding="utf-8") if overlay_file.exists() else None
             overlay_file.write_text(
                 yaml.safe_dump(doc, allow_unicode=True, sort_keys=False), encoding="utf-8")
-            # 写后校验：复用注册表校验，非法则回滚
-            try:
-                from pipeline.registry import load_sources
-
-                load_sources()
-            except Exception as exc:  # noqa: BLE001 — 校验失败回滚
-                if previous is None:
-                    overlay_file.unlink(missing_ok=True)
-                else:
-                    overlay_file.write_text(previous, encoding="utf-8")
-                return self._error(400, f"源配置无效：{exc}")
             return self._json({"status": "saved"})
 
         # ── 静态文件（site/ 与 /data/*） ────────────────

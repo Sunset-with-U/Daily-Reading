@@ -19,12 +19,20 @@ from .util import CONFIG_DIR, STATE_DIR, USER_CONFIG_DIR, deep_merge, load_json
 
 
 def load_settings() -> dict:
-    """出厂 settings.yaml + 用户覆盖层 settings_user.yaml（深合并，用户键胜出）。"""
+    """出厂 settings.yaml + 用户覆盖层 settings_user.yaml（深合并，用户键胜出）。
+
+    用户覆盖层是可写文件——坏文件只告警并忽略，绝不击穿 fail-open 管线。
+    """
     settings = yaml.safe_load((CONFIG_DIR / "settings.yaml").read_text(encoding="utf-8"))
     user_file = USER_CONFIG_DIR / "settings_user.yaml"
     if user_file.exists():
-        overlay = yaml.safe_load(user_file.read_text(encoding="utf-8")) or {}
-        settings = deep_merge(settings, overlay)
+        try:
+            overlay = yaml.safe_load(user_file.read_text(encoding="utf-8")) or {}
+            if not isinstance(overlay, dict):
+                raise ValueError("覆盖层顶层必须是映射")
+            settings = deep_merge(settings, overlay)
+        except Exception as exc:  # noqa: BLE001 — 用户文件坏了退回出厂配置
+            print(f"[settings] 用户覆盖层无效已忽略：{exc}")
     return settings
 
 

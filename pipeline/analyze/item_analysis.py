@@ -70,9 +70,16 @@ def analyze_items(dctx: DateContext, settings: dict, ai_cap: int = 0) -> str:
 
     # 先落盘 attempts 计数，防止中途被杀后重复计数丢失
     persist.save_items_doc(dctx.date_bj, doc)
-    results = runner.execute(requests, settings, dctx, kind="items")
+
+    def _persist_chunk(chunk_results: dict) -> None:
+        # 每个 chunk 回收即落盘，进程被杀不丢已付费结果（重复合并幂等）
+        _apply_results(doc, chunk_results, model)
+        persist.save_items_doc(dctx.date_bj, doc)
+
+    results = runner.execute(requests, settings, dctx, kind="items",
+                             on_results=_persist_chunk)
     merged = _apply_results(doc, results, model)
-    pending = len(requests) - len(results)  # batch 超时的部分（已登记续传）
+    pending = len(requests) - len(results)  # 只有超时批次缺席（已登记续传）
     persist.save_items_doc(dctx.date_bj, doc)
     return (f"提交 {len(requests)}，完成 {merged['done']}，"
             f"失败 {merged['failed']}，待续传 {pending}")
@@ -102,14 +109,19 @@ def _apply_results(doc: dict, results: dict[str, dict], model: str) -> dict:
     return {"done": done, "failed": failed}
 
 
-def merge_results(date_bj: str, results: dict[str, dict]) -> None:
-    """断点续传回收路径：把迟到的结果合并回历史日期文件。"""
+def merge_results(date_bj: str, results: dict[str, dict],
+                  provider: str | None = None) -> None:
+    """断点续传回收路径：把迟到的结果合并回历史日期文件。
+
+    provider 来自 pending entry——模型归属按提交时的供应商解析，
+    与当前面板选择无关。
+    """
     doc = persist.load_items(date_bj)
     if not doc:
         return
     from ..cli import load_settings
 
-    model = providers.model_for(load_settings(), "item")
+    model = providers.model_for(load_settings(), "item", provider=provider)
     merged = _apply_results(doc, results, model)
     persist.save_items_doc(date_bj, doc)
     print(f"  [collect-pending] {date_bj}: 补录 done={merged['done']} failed={merged['failed']}")
