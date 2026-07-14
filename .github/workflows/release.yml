@@ -29,6 +29,13 @@ jobs:
       - name: 安装 Briefcase
         run: python -m pip install --upgrade pip briefcase
 
+      - name: 预构建 sdist-only 依赖的 wheel
+        # briefcase 按目标平台只装 wheel，而 pywebview 的依赖 proxy_tools
+        # 在 PyPI 上只有 sdist——先本地构建纯 Python wheel，经 PIP_FIND_LINKS 提供
+        run: |
+          python -m pip wheel proxy_tools --wheel-dir "$GITHUB_WORKSPACE/wheels"
+          echo "PIP_FIND_LINKS=$GITHUB_WORKSPACE/wheels" >> "$GITHUB_ENV"
+
       - name: 生成应用骨架（briefcase create）
         run: briefcase create macOS
 
