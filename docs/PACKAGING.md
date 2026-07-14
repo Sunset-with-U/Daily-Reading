@@ -1,7 +1,7 @@
 # 打包与发布指南（macOS 桌面 App）
 
-本项目的桌面形态用 [Briefcase](https://briefcase.readthedocs.io/) 打包为原生 `.app` / `.dmg`。
-配置在仓库根 `pyproject.toml`；云端数据管线（`daily.yml` / `health.yml`）与打包互不相干。
+本项目用 [Briefcase](https://briefcase.readthedocs.io/) 打包为原生 `.app` / `.dmg`。
+配置在仓库根 `pyproject.toml`；`tests.yml`（单测门禁）与打包互不相干。
 
 ## 一、本地开发运行（不打包）
 

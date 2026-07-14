@@ -28,7 +28,7 @@ class AppState:
         self.run_requested = threading.Event()   # scheduler 消费
         self.run_edition: str | None = None
         self.scheduler_status = lambda: {}       # Phase 5 注入
-        self.version = "2.0.0"
+        self.version = "2.1.0"
 
 
 def make_server(state: AppState, port: int = 0) -> ThreadingHTTPServer:

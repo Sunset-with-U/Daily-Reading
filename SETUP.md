@@ -1,87 +1,68 @@
-# SETUP · 部署指南（新手友好版）
+# SETUP · MacBook 安装与配置指南（新手友好版）
 
-照着下面四步做，就能让这套系统每天自动为你工作。全程只需要浏览器，大约 15 分钟。
+三分钟装好，全部配置都在 App 的**设置面板**里完成——不需要编程经验，不需要碰 GitHub。
 
-> 🖥️ **只想在自己的 Mac 上用？可以跳过本指南。** 去仓库 **Releases** 页下载 macOS 桌面 App（`.dmg`），拖进「应用程序」后在设置面板粘贴 API Key 即可（密钥存进本机钥匙串，不经过 GitHub）。桌面 App 支持 Claude / ChatGPT / Gemini / DeepSeek 四家任选，安装说明见 [docs/PACKAGING.md](docs/PACKAGING.md)。本指南其余部分讲的是**云端模式**（GitHub Actions 定时管线 + Pages 网页看板）。
+## 第 1 步 · 下载安装（约 1 分钟）
 
-> 名词速览：**Secret** = 存在 GitHub 仓库里的加密密钥，工作流运行时才能读到，任何人（包括访客）都看不见；**Actions** = GitHub 提供的免费定时任务机器人；**Pages** = GitHub 提供的免费静态网站托管。
+1. 打开本仓库的 **[Releases](../../releases)** 页，下载最新的 `Daily Reading-x.x.x.dmg`；
+   （如果 Releases 还没有版本，去 **Actions → release → 最近一次绿色运行 → Artifacts** 下载 `Daily-Reading-macOS`，解压得到 `.dmg`。）
+2. 双击打开 `.dmg`，把 **Daily Reading** 拖进「应用程序」。
+3. **第一次打开必须：右键图标 → 打开 → 再点「打开」**（开源应用没有付费开发者签名，macOS 会拦一下，只需这一次，以后正常双击）。
 
----
+打开后你会看到菜单栏出现 **DR** 图标——App 常驻在这里，关掉窗口也不会退出。
 
-## 第 1 步 · 申请 Claude API Key（必须，约 5 分钟）
+## 第 2 步 · 申请一个 AI 的 API Key（约 5 分钟，四选一）
 
-这是整套系统唯一需要花钱的部分（约 $35–50/月，可随时调低）。
+App 支持四家 AI，任选一家（也可以都配，随时切换）：
 
-1. 打开 [console.anthropic.com](https://console.anthropic.com/) 注册账号。
-2. 左侧菜单 **Billing** → 充值（建议先充 $25 试运行）。
-3. ⚠️ **强烈建议**：在 Billing 里设置 **月度消费上限**（如 $60），从根上杜绝意外账单。
-4. 左侧菜单 **API Keys** → **Create Key**，名字随便起（如 `daily-reading`）。
-5. 复制生成的 Key（以 `sk-ant-` 开头）。**它只完整显示这一次**，先粘到备忘录里。
-
-## 第 2 步 · 申请 FRED API Key（必须，免费，约 3 分钟）
-
-FRED 是圣路易斯联储的宏观数据库，看板的宏观数据面板靠它。
-
-1. 打开 [fredaccount.stlouisfed.org/apikeys](https://fredaccount.stlouisfed.org/apikeys) 注册（免费）。
-2. 点 **Request API Key**，用途随便填（如 personal research）。
-3. 复制那串 32 位字符。
-
-## 第 3 步 · 把密钥存进仓库 Secrets（约 3 分钟）
-
-1. 打开你的仓库页面 → 顶部 **Settings**（⚙️ 设置）。
-2. 左侧 **Secrets and variables** → **Actions** → 绿色按钮 **New repository secret**。
-3. 依次添加（Name 必须一字不差，全大写）：
-
-| Name | Secret 值 | 必须？ |
+| 供应商 | 申请入口 | 说明 |
 |---|---|---|
-| `ANTHROPIC_API_KEY` | 第 1 步的 `sk-ant-...` | ✅ 必须 |
-| `FRED_API_KEY` | 第 2 步的 32 位字符 | ✅ 必须 |
-| `TWITTERAPI_IO_KEY` | [twitterapi.io](https://twitterapi.io/) 的 Key | 可选 |
+| **Claude**（推荐，默认） | [console.anthropic.com](https://console.anthropic.com/) → Billing 充值 → API Keys | 分析质量最佳；⚠️ 建议在 Billing 里设置月度消费上限 |
+| ChatGPT（OpenAI） | [platform.openai.com](https://platform.openai.com/) | 同样支持省钱 Batch 模式 |
+| Gemini（Google） | [aistudio.google.com](https://aistudio.google.com/) | 有免费额度可先试用 |
+| DeepSeek | [platform.deepseek.com](https://platform.deepseek.com/) | 最便宜，中文能力好 |
 
-> 关于可选的 X（Twitter）拉取：不配置时系统自动跳过 X 源，用免费的 Telegram 快讯层顶替，一切照常。哪天想开了，去 twitterapi.io 充值拿 Key 填进来即可，**不用改任何代码**，下一班自动生效（104 个精选账号，约 $15–25/月）。
+复制生成的 Key（只完整显示一次，先粘到备忘录）。
 
-## 第 4 步 · 启用 GitHub Pages（约 1 分钟）
+## 第 3 步 · 在设置面板里完成配置（约 2 分钟）
 
-1. 仓库 **Settings** → 左侧 **Pages**。
-2. **Source** 下拉框选 **GitHub Actions**（不是 "Deploy from a branch"）。
-3. 完成。下次管线运行后，看板就会出现在：
-   `https://<你的用户名>.github.io/Daily-Reading/`
+打开 App 窗口 → 顶部导航最右边的「**设置**」：
 
----
+1. **API 密钥**区：把第 2 步的 Key 粘进对应供应商的输入框 → 点「保存」→ 左侧圆点变绿。
+   密钥存进 **macOS 钥匙串**，界面永不回显明文，卸载 App 也不会泄露。
+2. **AI 引擎**区：选你配了 Key 的供应商；「调用方式」按需选——
+   - **实时**：跑完一条看一条，约半小时出全量结果；
+   - **省钱 Batch**（Claude/ChatGPT 支持）：五折价格，等 30–75 分钟。
+3. **信息源**区（可选）：120+ 源已按推荐配置开好，你可以按分类展开逐个勾选，或在底部一行添加自己的 RSS 源。
+   - 想要财联社电报等 8 个中文快讯源：在「RSSHub 实例」填 `https://rsshub.app`（公共实例）或你自建的地址。
+   - 想要 X（Twitter）精选账号流：去 [twitterapi.io](https://twitterapi.io/) 拿个 Key 粘进来（约 $15–25/月，不配则自动用免费 Telegram 快讯层顶替）。
+   - 想要宏观数据面板：[FRED](https://fredaccount.stlouisfed.org/apikeys) 免费注册一个 Key 粘进来。
+4. **运行**区：点「**立即运行**」跑第一班——首次全量抓取约 3–10 分钟，AI 分析视模式再等一会儿，完成后弹系统通知。
 
-## 首次运行与日常节奏
+## 日常使用
 
-- **自动**：合并到主分支后，管线每天自动跑两班——UTC 23:00（北京早上 7 点，早报）和 UTC 12:00（北京晚上 8 点，晚报），跑完约 20–90 分钟后看板更新。
-- **手动**：仓库 **Actions** 标签页 → 左侧选 **daily-pipeline** → 右侧 **Run workflow**，参数全部留默认直接点绿色按钮即可。第一次建议手动跑一次验证全链路。
-  - 小贴士：**Run workflow 按钮只在工作流文件进入主分支后才会出现**；开发分支阶段，往分支推任意提交也会触发一次测试运行。
-- **每周一**：`source-health` 工作流自动探活全部信息源，并把结果写进一个叫「源健康周报」的 Issue，哪个源挂了、挂了几周、建议禁用谁，一目了然。
+- **全自动**：北京时间 07:00（早报）/ 20:00（晚报）自动运行。白天没开机？晚上打开 App 会自动补跑最近的一班，不重复花钱。
+- **七个视图**：今日报告 / 信息流（筛选+搜索）/ 关注清单 / 市场快照 / 历史归档 / 源状态 / 设置；右上角一键切换明暗主题。
+- **菜单栏**：DR 图标 → 打开看板 / 立即运行早报 / 立即运行晚报 / 退出。
 
-## 花费控制在哪里调
+## 花费控制
 
-打开 `config/settings.yaml`（网页上直接点编辑就行）：
-
-| 想省钱 | 改这里 |
-|---|---|
-| 少分析点条目 | `ai.daily_item_cap: 600` 调低（如 300） |
-| 报告降档（约省一半报告费） | `ai.report_model` 改成 `claude-sonnet-5` |
-| 缩短送给 AI 的正文 | `fetch.content_truncate_chars: 4000` 调低 |
-| 每源少抓几条 | `fetch.max_items_per_source: 30` 调低 |
-
-改完提交，下一班自动生效。Anthropic 控制台的 **Usage** 页可以随时核对实际花费。
+设置面板「AI 引擎」区的**每日 AI 条数上限**（默认 600）是总闸——调到 300 费用即减半。换 DeepSeek 或调低上限，可以把成本压到每天几毛钱。各家控制台都能实时查看用量。
 
 ## 常见问题
 
-**Q：Actions 里 "部署 Pages" 一步红了？**
-A：多半是第 4 步没做（Pages 的 Source 没选 GitHub Actions）。这一步失败不影响数据管线，配好后下一班自动恢复。
+**Q：打开提示"无法验证开发者"？**
+A：右键图标 → 打开 → 再点「打开」（只需一次）。或终端执行：
+`xattr -dr com.apple.quarantine "/Applications/Daily Reading.app"`
 
-**Q：日志里出现「跳过：未配置 ANTHROPIC_API_KEY」？**
-A：第 3 步的 Secret 名字打错了或没加。注意必须全大写、无空格。
+**Q：运行完了但条目没有 AI 分析？**
+A：检查设置面板——所选供应商的密钥圆点是否绿色；「源状态」视图可确认抓取正常。没配 Key 时管线照常抓取归档，只是跳过 AI 环节，补配后下一班自动分析。
 
 **Q：某个信息源一直失败？**
-A：正常现象——上百个源总有几个在改版或抽风。管线单源隔离，不影响其他源；周一的「源健康周报」会点名连续失败的源，可以在 `config/sources.yaml` 里把它 `enabled: false` 掉。
+A：正常现象——上百个源总有几个在改版。单源失败不影响其他源；「源状态」视图能看到每个源的最近状态，你可以在设置里把长期失败的源关掉。
 
-**Q：想加/减信息源、改自选清单？**
-A：源在 `config/sources.yaml`，自选在 `config/watchlist.yaml`，都是带注释的纯文本，照着已有条目的格式增删即可。
+**Q：我的数据存在哪？**
+A：全部在本机 `~/Library/Application Support/Daily-Reading/`——`data/` 是每日产出，`config/` 是你的个性化配置。删除该目录即完全重置（钥匙串里的 Key 需在「钥匙串访问」中单独删除）。
 
 **Q：报告是投资建议吗？**
 A：不是。全部内容仅供研究参考，交易决策请自行判断。

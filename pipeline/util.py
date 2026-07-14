@@ -10,7 +10,7 @@ from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 # 桌面 App 通过这两个环境变量把数据/配置重定向到用户目录
 # （必须在 import pipeline 之前设置——dedupe/batches 的模块级常量随此求值）；
-# 云端 CI 不设置，回落仓库根，行为与既往一致。
+# 未设置时（本地开发/测试）回落仓库根。
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = Path(os.environ.get("DAILY_READING_DATA_DIR", "") or REPO_ROOT / "data")
 STATE_DIR = DATA_DIR / "state"

@@ -1,7 +1,7 @@
 """API Key 管理：macOS Keychain（keyring）存取 + 回填 os.environ。
 
 回填后 pipeline 的 8 处 os.environ 读取点无需任何改动；
-云端 CI 不经过本模块，直读 workflow secrets 注入的 env。
+测试与命令行开发不经过本模块（直接读环境变量）。
 """
 from __future__ import annotations
 
