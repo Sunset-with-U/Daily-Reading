@@ -50,7 +50,9 @@ def load_user_yaml(path: Path) -> dict | None:
     try:
         import yaml
 
-        doc = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+        doc = yaml.safe_load(path.read_text(encoding="utf-8"))
+        if doc is None:
+            return None  # 空文件同样按"没写"处理（watchlist 依此回退出厂清单）
         if not isinstance(doc, dict):
             raise ValueError("顶层必须是映射")
         return doc

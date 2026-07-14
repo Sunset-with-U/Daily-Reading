@@ -1,7 +1,4 @@
 """用户配置覆盖层：settings 深合并 / sources overrides+extra / watchlist 整替换。"""
-import pytest
-import yaml
-
 from pipeline.util import deep_merge
 
 
@@ -163,6 +160,25 @@ def test_watchlist_corrupt_user_file_falls_back(tmp_path, monkeypatch, capsys):
     (factory / "watchlist.yaml").write_text(
         "tickers:\n  - {symbol: SPY, name_zh: 标普}\n", encoding="utf-8")
     (user / "watchlist_user.yaml").write_text("tickers: [broken", encoding="utf-8")
+    monkeypatch.setattr("pipeline.util.CONFIG_DIR", factory)
+    monkeypatch.setattr("pipeline.util.USER_CONFIG_DIR", user)
+    monkeypatch.setattr("pipeline.persist.DATA_DIR", data)
+    from pipeline import persist
+    from pipeline.util import load_json
+
+    persist.write_watchlist_export()
+    assert [t["symbol"] for t in load_json(data / "watchlist.json")["tickers"]] == ["SPY"]
+
+
+def test_watchlist_empty_user_file_falls_back(tmp_path, monkeypatch):
+    """空的 watchlist_user.yaml 按"没写"处理 → 仍导出出厂清单（终局评审回归项）。"""
+    factory = tmp_path / "factory"
+    user = tmp_path / "user"
+    data = tmp_path / "data"
+    factory.mkdir(), user.mkdir()
+    (factory / "watchlist.yaml").write_text(
+        "tickers:\n  - {symbol: SPY, name_zh: 标普}\n", encoding="utf-8")
+    (user / "watchlist_user.yaml").write_text("", encoding="utf-8")
     monkeypatch.setattr("pipeline.util.CONFIG_DIR", factory)
     monkeypatch.setattr("pipeline.util.USER_CONFIG_DIR", user)
     monkeypatch.setattr("pipeline.persist.DATA_DIR", data)
