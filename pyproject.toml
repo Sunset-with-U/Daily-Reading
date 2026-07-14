@@ -31,7 +31,8 @@ requires = [
     "pandas>=2.2",
     "openpyxl>=3.1",
     "yfinance>=0.2.50",
-    # 桌面层（requirements-app.txt）
+    # 桌面层（requirements-app.txt）；注意 pywebview 依赖的 proxy_tools 只有
+    # sdist——打包前需自建 wheel 并设 PIP_FIND_LINKS（见 docs/PACKAGING.md）
     "keyring>=25.0",
     "pywebview>=5.0",
 ]
