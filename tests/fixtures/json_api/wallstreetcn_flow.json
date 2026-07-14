@@ -1,0 +1,27 @@
+{
+  "code": 20000,
+  "data": {
+    "items": [
+      {
+        "resource_type": "article",
+        "resource": {
+          "id": 3720001,
+          "title": "美联储按兵不动，点阵图暗示年内两次降息",
+          "uri": "https://wallstreetcn.com/articles/3720001",
+          "display_time": 1783200000,
+          "content_short": "<p>美联储7月会议维持利率不变，点阵图中位数显示年内还有两次降息空间。</p>"
+        }
+      },
+      {
+        "resource_type": "article",
+        "resource": {
+          "id": 3720002,
+          "title": "黄金突破3900美元，创4月以来新高",
+          "uri": "https://wallstreetcn.com/articles/3720002",
+          "display_time": 1783203600,
+          "content_short": "美元走弱叠加实际利率下行，黄金持续走强。"
+        }
+      }
+    ]
+  }
+}

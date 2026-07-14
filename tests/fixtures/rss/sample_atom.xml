@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Sample Substack</title>
+  <entry>
+    <title>The Dollar Milkshake, Revisited</title>
+    <link rel="alternate" href="https://example.substack.com/p/dollar-milkshake"/>
+    <id>substack-post-9001</id>
+    <published>2026-07-11T09:00:00Z</published>
+    <author><name>Some Analyst</name></author>
+    <content type="html">&lt;p&gt;Full text of the free post about dollar liquidity and gold.&lt;/p&gt;</content>
+  </entry>
+  <entry>
+    <title>Paid Post Teaser</title>
+    <link rel="alternate" href="https://example.substack.com/p/paid-teaser"/>
+    <id>substack-post-9002</id>
+    <updated>2026-07-10T08:00:00Z</updated>
+    <summary type="html">Preview only …</summary>
+  </entry>
+</feed>

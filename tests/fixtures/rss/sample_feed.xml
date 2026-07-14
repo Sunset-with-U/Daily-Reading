@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Sample Markets Feed</title>
+    <link>https://example.com</link>
+    <item>
+      <title>Fed Holds Rates Steady, Signals Two Cuts This Year</title>
+      <link>https://example.com/news/fed-holds-rates?utm_source=rss&amp;utm_medium=feed</link>
+      <guid isPermaLink="false">example-fed-2026-001</guid>
+      <pubDate>Fri, 10 Jul 2026 18:05:00 GMT</pubDate>
+      <description><![CDATA[<p>The Federal Reserve held interest rates steady on Friday and signaled <b>two cuts</b> later this year as inflation cooled.</p>]]></description>
+    </item>
+    <item>
+      <title>Gold Tops $3,900 as Dollar Weakens</title>
+      <link>https://example.com/news/gold-3900</link>
+      <guid isPermaLink="false">example-gold-2026-002</guid>
+      <pubDate>Fri, 10 Jul 2026 15:30:00 GMT</pubDate>
+      <description>Gold rallied past $3,900 an ounce, its highest since April.</description>
+    </item>
+    <item>
+      <title></title>
+      <link>https://example.com/should-be-skipped</link>
+    </item>
+  </channel>
+</rss>

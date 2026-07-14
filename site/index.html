@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Daily Reading · 每日金融研究看板</title>
+<meta name="description" content="面向职业交易员的每日信息流研究看板：AI 逐条分析 + 每日深度市场报告">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>📖</text></svg>">
+<link rel="stylesheet" href="css/style.css">
+<script>
+  // 首屏防闪烁：尽早应用主题
+  (function () {
+    var saved = localStorage.getItem("dr-theme");
+    var theme = saved || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.dataset.theme = theme;
+  })();
+</script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="#/report">Daily&nbsp;Reading<span class="brand-dot">.</span></a>
+      <nav class="nav" id="nav">
+        <a href="#/report" data-route="report">今日报告</a>
+        <a href="#/feed" data-route="feed">信息流</a>
+        <a href="#/watchlist" data-route="watchlist">关注清单</a>
+        <a href="#/market" data-route="market">市场快照</a>
+        <a href="#/archive" data-route="archive">归档</a>
+        <a href="#/sources" data-route="sources">源状态</a>
+        <a href="#/settings" data-route="settings" hidden>设置</a>
+      </nav>
+      <div class="controls">
+        <div class="date-nav" id="date-nav" title="切换日期">
+          <button id="date-prev" aria-label="前一天">‹</button>
+          <span id="date-label">—</span>
+          <button id="date-next" aria-label="后一天">›</button>
+        </div>
+        <button id="theme-toggle" class="icon-btn" aria-label="切换明暗主题">◐</button>
+      </div>
+    </div>
+  </header>
+
+  <div id="tickertape" class="tickertape"></div>
+
+  <main id="view" class="view">
+    <div class="loading">正在加载数据 …</div>
+  </main>
+
+  <footer class="footer">
+    <p>Daily Reading — 开源的每日金融研究看板 ·
+      <a href="https://github.com/Sunset-with-U/Daily-Reading" target="_blank" rel="noopener">GitHub</a></p>
+    <p class="footer-note">行情图表由 <a href="https://www.tradingview.com/" target="_blank" rel="noopener">TradingView</a> 提供 ·
+      AI 分析由 Claude 生成，仅供研究参考，不构成投资建议</p>
+  </footer>
+
+  <script src="js/vendor/marked.umd.js"></script>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

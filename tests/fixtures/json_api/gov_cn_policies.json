@@ -1,0 +1,26 @@
+{
+  "code": 200,
+  "searchVO": {
+    "catMap": {
+      "gongwen": {
+        "totalCount": 5231,
+        "listVO": [
+          {
+            "docId": "abc123",
+            "title": "国务院关于促进民营经济发展的若干意见",
+            "url": "https://www.gov.cn/zhengce/content/202607/content_10012.htm",
+            "pubtime": "2026-07-10 18:00:00",
+            "summary": "为进一步优化民营经济发展环境……"
+          },
+          {
+            "docId": "def456",
+            "title": "关于调整部分商品进口关税的公告",
+            "url": "https://www.gov.cn/zhengce/content/202607/content_10013.htm",
+            "pubtime": "2026-07-11 09:30:00",
+            "summary": "自2026年8月1日起调整……"
+          }
+        ]
+      }
+    }
+  }
+}
