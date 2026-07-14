@@ -25,8 +25,8 @@ export const api = {
   watchlistConf: () => getJSON("data/watchlist.json"),
 };
 
-// —— App 模式写通道（本地 loopback 服务）——
-// Pages 静态托管下 /api 不存在：status() 返回 null，设置入口保持隐藏。
+// —— App 写通道（本地 loopback 服务）——
+// 纯静态预览（scripts/preview.sh）下 /api 不存在：status() 返回 null，设置入口隐藏。
 // token 来自窗口 URL ?t=（App 启动时注入），写接口凭它校验。
 const appToken = new URLSearchParams(location.search).get("t") || "";
 

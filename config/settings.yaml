@@ -3,8 +3,8 @@
 # ============================================================
 
 fetch:
-  rsshub_base: ""               # RSSHub 实例地址；CI 由 RSSHUB_BASE 环境变量注入（优先），
-                                # 桌面 App 在设置面板配置（如 https://rsshub.app）
+  rsshub_base: ""               # RSSHub 实例地址：在设置面板配置（如 https://rsshub.app）；
+                                # 环境变量 RSSHUB_BASE 优先（本地开发/测试用）
   timeout_s: 20                 # 单源 HTTP 超时（秒）
   max_items_per_source: 30      # 每源每次运行最多取多少条（去重前）
   workers: 16                   # 抓取并发线程数
@@ -19,7 +19,7 @@ dedupe:
 ai:
   provider: anthropic                 # anthropic | openai | gemini | deepseek
   mode: batch                         # batch=省钱5折(等30-75分钟) | realtime=逐条即时(约2倍价)
-                                      # 云端 CI 建议 batch；桌面 App 面板可切换
+                                      # 设置面板可随时切换
   models:                             # 各供应商的 逐条分析/每日报告 模型（面板可改）
     anthropic: {item: claude-haiku-4-5, report: claude-opus-4-8}
     openai: {item: gpt-5-mini, report: gpt-5.1}

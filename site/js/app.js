@@ -81,7 +81,7 @@ function mountTicker() {
 async function boot() {
   initTheme(() => { mountTicker(); render(); });  // 主题切换 → 重建 widget + 重绘视图
 
-  // 三个独立请求并行发起；App 模式探测成功则亮出设置入口（Pages 保持隐藏）
+  // 三个独立请求并行发起；App 服务探测成功则亮出设置入口（纯静态预览时保持隐藏）
   [state.app, state.index, state.watchlistConf] = await Promise.all([
     appApi.status(), api.index(), api.watchlistConf(),
   ]);
