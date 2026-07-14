@@ -37,6 +37,7 @@ export async function mount(el, state) {
 
   const ai = settings.ai || {};
   const models = ai.models || {};
+  const sched = settings.schedule || {};
   const provMeta = status.providers || {};
   const overlay = sourcesDoc.overlay || {};
   overlay.overrides = overlay.overrides || {};
@@ -108,7 +109,7 @@ export async function mount(el, state) {
     </div>
 
     <div class="card settings-card">
-      <h2>运行</h2>
+      <h2>运行与定时</h2>
       <div class="form-row">
         <label>手动运行</label>
         <select id="run-edition">
@@ -118,6 +119,22 @@ export async function mount(el, state) {
         </select>
         <button class="btn btn-primary" id="run-now">立即运行</button>
         <span class="save-note" id="run-note"></span>
+      </div>
+      <div class="form-row">
+        <label>早报时间</label>
+        <input id="set-hour-m" type="number" min="0" max="23" class="hour-input"
+               value="${sched.morning_hour ?? 7}">
+        <span class="form-hint">点（北京时间整点）</span>
+      </div>
+      <div class="form-row">
+        <label>晚报时间</label>
+        <input id="set-hour-e" type="number" min="0" max="23" class="hour-input"
+               value="${sched.evening_hour ?? 20}">
+        <span class="form-hint">点；两班请错开。到点自动抓取分析并推送通知，错过班次开机自动补</span>
+      </div>
+      <div class="form-actions">
+        <button class="btn" id="save-sched">保存定时</button>
+        <span class="save-note" id="sched-note"></span>
       </div>
       <p class="form-hint" id="sched-line"></p>
     </div>`;
@@ -235,6 +252,15 @@ export async function mount(el, state) {
   el.querySelector("#run-now").addEventListener("click", async () => {
     await save(el.querySelector("#run-note"), () =>
       appApi.run(el.querySelector("#run-edition").value), "已加入队列，完成后会收到通知");
+  });
+  el.querySelector("#save-sched").addEventListener("click", async () => {
+    const clamp = (v, d) => { const n = Number(v); return Number.isInteger(n) && n >= 0 && n <= 23 ? n : d; };
+    await save(el.querySelector("#sched-note"), () => appApi.saveSettings({
+      schedule: {
+        morning_hour: clamp(el.querySelector("#set-hour-m").value, 7),
+        evening_hour: clamp(el.querySelector("#set-hour-e").value, 20),
+      },
+    }), "已保存，下一次检查即生效");
   });
 }
 

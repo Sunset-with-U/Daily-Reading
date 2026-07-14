@@ -33,10 +33,11 @@ briefcase package macOS --adhoc-sign   # 生成 dist/Daily Reading-<版本>.dmg
 
 | 触发方式 | 产物去向 |
 |---|---|
-| Actions 页面手动 **Run workflow** | Actions artifact（`Daily-Reading-macOS`）|
-| 推送 `v*` 标签（如 `git tag v2.0.0 && git push origin v2.0.0`）| artifact + **draft Release** 挂 `.dmg`，检查后手动发布 |
+| Actions 手动 **Run workflow**，`publish_tag` 留空 | 仅 Actions artifact（`Daily-Reading-macOS`）|
+| Actions 手动 **Run workflow**，`publish_tag` 填版本号（如 `v2.2.0`）| artifact + **正式 GitHub Release** 挂 `.dmg`（所有人可在 Releases 页下载）|
+| 推送 `v*` 标签 | 同上（等价于填了 publish_tag）|
 
-runner 是 `macos-14`（Apple Silicon），产物为 arm64 `.dmg`。
+runner 是 `macos-14`（Apple Silicon），产物为 arm64 `.dmg`。发布步骤幂等：同名 Release 已存在时只补挂/覆盖产物，可安全重跑。
 
 ## 四、无证书（ad-hoc 签名）安装说明
 

@@ -16,6 +16,10 @@ fetch:
 dedupe:
   state_retention_days: 45      # seen_items 状态保留天数
 
+schedule:
+  morning_hour: 7               # 早报自动运行时间（北京时间整点 0-23，设置面板可改）
+  evening_hour: 20              # 晚报自动运行时间
+
 ai:
   provider: anthropic                 # anthropic | openai | gemini | deepseek
   mode: batch                         # batch=省钱5折(等30-75分钟) | realtime=逐条即时(约2倍价)

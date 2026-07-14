@@ -31,6 +31,17 @@ def test_default_paths_anchor_repo():
     assert got["user_config"] == str(REPO / "config")  # 未设时与出厂目录相同
 
 
+def test_init_env_honors_preset_env(tmp_path, monkeypatch):
+    """env 预设时 init_env 的路径字典必须与之一致（服务端读 = 管线写）。"""
+    monkeypatch.setenv("DAILY_READING_DATA_DIR", str(tmp_path / "d"))
+    monkeypatch.setenv("DAILY_READING_USER_CONFIG_DIR", str(tmp_path / "u"))
+    from app import paths as app_paths
+
+    p = app_paths.init_env()
+    assert p["data"] == tmp_path / "d"
+    assert p["user_config"] == tmp_path / "u"
+
+
 def test_env_redirects_all_dependents(tmp_path):
     got = _probe({
         "DAILY_READING_DATA_DIR": str(tmp_path / "d"),
