@@ -11,16 +11,11 @@ _delegate = None
 
 
 def install(window, scheduler, app_state) -> None:
-    import objc
     from AppKit import (NSMenu, NSMenuItem, NSStatusBar,
                         NSVariableStatusItemLength)
     from Foundation import NSObject
 
     class _MenuActions(NSObject):
-        def initWith_(self):  # noqa: N802 — ObjC 命名约定
-            self = objc.super(_MenuActions, self).init()
-            return self
-
         def showWindow_(self, sender):  # noqa: N802
             window.show()
 

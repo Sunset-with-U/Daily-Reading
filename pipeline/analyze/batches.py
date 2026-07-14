@@ -34,19 +34,16 @@ def wait_for(provider: str, batch_id: str, timeout_min: int,
              interval_s: int = 60) -> bool:
     if provider == "anthropic":
         return wait(batch_id, timeout_min, interval_s)
-    from . import providers
-
+    # 终态判定收敛在 _batch_ended（与 collect_pending 同一权威）
     deadline = time.monotonic() + timeout_min * 60
-    while True:
-        status = providers.openai_batch_status(batch_id).get("status", "")
-        if status in _OPENAI_DONE:
-            return True
+    while not _batch_ended(provider, batch_id):
         remaining = deadline - time.monotonic()
         if remaining <= 0:
             return False
-        print(f"  [batch {batch_id[:18]}…] status={status} "
+        print(f"  [batch {batch_id[:18]}…] 等待 {provider} batch "
               f"(剩余等待 {int(remaining / 60)} 分钟)")
         time.sleep(min(interval_s, max(remaining, 1)))
+    return True
 
 
 def collect_for(provider: str, batch_id: str) -> dict[str, dict]:
@@ -102,15 +99,17 @@ def collect(batch_id: str) -> dict[str, dict]:
     for result in _client().messages.batches.results(batch_id):
         rtype = result.result.type
         if rtype == "succeeded":
-            msg = result.result.message
-            text = next((b.text for b in msg.content if b.type == "text"), "")
-            out[result.custom_id] = {"ok": text, "usage": {
-                "input_tokens": msg.usage.input_tokens,
-                "output_tokens": msg.usage.output_tokens,
-            }}
+            out[result.custom_id] = message_to_result(result.result.message)
         else:
             out[result.custom_id] = {"error": rtype}
     return out
+
+
+def message_to_result(msg) -> dict:
+    """Anthropic SDK Message → 统一结果契约（Batch 回收与实时路径共用）。"""
+    text = next((b.text for b in msg.content if b.type == "text"), "")
+    return {"ok": text, "usage": {"input_tokens": msg.usage.input_tokens,
+                                  "output_tokens": msg.usage.output_tokens}}
 
 
 def parse_json_text(text: str) -> dict | None:

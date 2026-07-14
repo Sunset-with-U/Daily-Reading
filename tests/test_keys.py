@@ -1,30 +1,15 @@
-"""密钥管理：存取/回填/只回布尔（内存桩 backend，不碰真 Keychain）。"""
+"""密钥管理：存取/回填/只回布尔（fake_keyring 桩见 conftest）。"""
 import pytest
 
 from app import keys
 
 
-class _FakeKeyring:
-    def __init__(self):
-        self.store = {}
+def test_managed_keys_cover_provider_envs():
+    # keys.MANAGED_KEYS 与 providers.PROVIDERS 因 import 顺序约束刻意双写——
+    # 此断言防止新增供应商时漏改一边
+    from pipeline.analyze.providers import PROVIDERS
 
-    def set_password(self, service, name, value):
-        self.store[(service, name)] = value
-
-    def get_password(self, service, name):
-        return self.store.get((service, name))
-
-    def delete_password(self, service, name):
-        del self.store[(service, name)]
-
-
-@pytest.fixture
-def fake_keyring(monkeypatch):
-    fake = _FakeKeyring()
-    monkeypatch.setattr(keys, "_keyring", lambda: fake)
-    for name in keys.MANAGED_KEYS:
-        monkeypatch.delenv(name, raising=False)
-    return fake
+    assert {info["env"] for info in PROVIDERS.values()} <= set(keys.MANAGED_KEYS)
 
 
 def test_set_key_writes_keychain_and_env(fake_keyring, monkeypatch):

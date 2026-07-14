@@ -46,13 +46,17 @@ def supports_batch(provider: str) -> bool:
 
 def available(settings: dict) -> bool:
     """当前所选供应商的 API Key 是否就位（gating 用）。"""
-    info = PROVIDERS.get(provider_of(settings))
-    return bool(info and os.environ.get(info["env"]))
+    return key_available(provider_of(settings))
 
 
 def key_available(provider: str) -> bool:
     info = PROVIDERS.get(provider)
     return bool(info and os.environ.get(info["env"]))
+
+
+def env_var(provider: str) -> str:
+    """供应商对应的 API Key 环境变量名（提示语用，调用方不必知道矩阵内部形状）。"""
+    return PROVIDERS.get(provider, {}).get("env", "API Key")
 
 
 def model_for(settings: dict, kind: str, provider: str | None = None) -> str:
@@ -82,30 +86,36 @@ def _key(provider: str) -> str:
 
 # ── 网络出口（测试打桩缝） ──────────────────────────────────
 
+_http = None  # 共享连接池：实时模式数百请求复用 TCP/TLS（并发首调竞态无害）
+
+
+def _http_client():
+    global _http
+    if _http is None:
+        import httpx
+
+        _http = httpx.Client()
+    return _http
+
 
 def _post(url: str, headers: dict, body: dict, timeout_s: int = 600) -> dict:
-    import httpx
-
-    resp = httpx.post(url, headers=headers, json=body, timeout=timeout_s)
+    resp = _http_client().post(url, headers=headers, json=body, timeout=timeout_s)
     resp.raise_for_status()
     return resp.json()
 
 
 def _get(url: str, headers: dict, timeout_s: int = 60):
-    import httpx
+    # 轮询/下载走仓库共享 GET：自带 429/5xx 重试与 Retry-After 退避
+    from ..fetch import http
 
-    resp = httpx.get(url, headers=headers, timeout=timeout_s)
-    resp.raise_for_status()
-    return resp
+    return http.get(url, headers=headers, timeout_s=timeout_s)
 
 
 def _post_file(url: str, headers: dict, filename: str, content: bytes,
                data: dict, timeout_s: int = 120) -> dict:
-    import httpx
-
-    resp = httpx.post(url, headers=headers, data=data,
-                      files={"file": (filename, content, "application/jsonl")},
-                      timeout=timeout_s)
+    resp = _http_client().post(url, headers=headers, data=data,
+                               files={"file": (filename, content, "application/jsonl")},
+                               timeout=timeout_s)
     resp.raise_for_status()
     return resp.json()
 
@@ -208,13 +218,23 @@ def call_realtime(provider: str, params: dict) -> dict:
         return {"error": f"{type(exc).__name__}"}
 
 
-def _anthropic_client():
-    import anthropic
+_anthropic_clients: dict[str, object] = {}
 
-    return anthropic.Anthropic()
+
+def _anthropic_client():
+    # 按 Key 缓存：连接池跨请求复用；面板换 Key 后自动用新客户端
+    key = os.environ.get("ANTHROPIC_API_KEY", "")
+    client = _anthropic_clients.get(key)
+    if client is None:
+        import anthropic
+
+        client = _anthropic_clients[key] = anthropic.Anthropic()
+    return client
 
 
 def _anthropic_realtime(params: dict) -> dict:
+    from . import batches
+
     client = _anthropic_client()
     # 大输出（报告 30K tokens）必须流式，否则 SDK 拒绝非流式长请求
     if int(params.get("max_tokens", 0)) > 8192:
@@ -222,9 +242,7 @@ def _anthropic_realtime(params: dict) -> dict:
             msg = stream.get_final_message()
     else:
         msg = client.messages.create(**params)
-    text = next((b.text for b in msg.content if b.type == "text"), "")
-    return {"ok": text, "usage": {"input_tokens": msg.usage.input_tokens,
-                                  "output_tokens": msg.usage.output_tokens}}
+    return batches.message_to_result(msg)
 
 
 def _openai_realtime(params: dict) -> dict:

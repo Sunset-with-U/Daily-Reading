@@ -15,7 +15,8 @@ from . import datectx, persist
 from .dedupe import SeenStore, primary_key
 from .models import FetchContext
 from .registry import load_sources, select_sources
-from .util import CONFIG_DIR, STATE_DIR, USER_CONFIG_DIR, deep_merge, load_json
+from .util import (CONFIG_DIR, STATE_DIR, USER_CONFIG_DIR, deep_merge,
+                   load_json, load_user_yaml)
 
 
 def load_settings() -> dict:
@@ -24,15 +25,9 @@ def load_settings() -> dict:
     用户覆盖层是可写文件——坏文件只告警并忽略，绝不击穿 fail-open 管线。
     """
     settings = yaml.safe_load((CONFIG_DIR / "settings.yaml").read_text(encoding="utf-8"))
-    user_file = USER_CONFIG_DIR / "settings_user.yaml"
-    if user_file.exists():
-        try:
-            overlay = yaml.safe_load(user_file.read_text(encoding="utf-8")) or {}
-            if not isinstance(overlay, dict):
-                raise ValueError("覆盖层顶层必须是映射")
-            settings = deep_merge(settings, overlay)
-        except Exception as exc:  # noqa: BLE001 — 用户文件坏了退回出厂配置
-            print(f"[settings] 用户覆盖层无效已忽略：{exc}")
+    overlay = load_user_yaml(USER_CONFIG_DIR / "settings_user.yaml")
+    if overlay:
+        settings = deep_merge(settings, overlay)
     return settings
 
 
@@ -151,10 +146,10 @@ def cmd_run(args) -> int:
     if args.skip_ai:
         print("[analyze] 跳过（--skip-ai）")
     elif not _ai_available(settings):
-        from .analyze.providers import PROVIDERS, provider_of
+        from .analyze.providers import env_var, provider_of
 
-        env_key = PROVIDERS.get(provider_of(settings), {}).get("env", "API Key")
-        print(f"[analyze] 跳过：未配置 {env_key}（当前 AI 供应商 {provider_of(settings)}）")
+        print(f"[analyze] 跳过：未配置 {env_var(provider_of(settings))}"
+              f"（当前 AI 供应商 {provider_of(settings)}）")
     else:
         _guarded_stage("analyze", lambda: _run_analyze(dctx, settings, args.ai_cap))
         # Stage 5: report ---------------------------------------------------
@@ -257,9 +252,9 @@ def cmd_collect_pending() -> int:
     if not pending:
         print("[collect-pending] 无待回收的 Batch")
         return 0
-    from .analyze.providers import PROVIDERS
+    from .analyze.providers import PROVIDERS, key_available
 
-    if not any(os.environ.get(p["env"]) for p in PROVIDERS.values()):
+    if not any(key_available(p) for p in PROVIDERS):
         print("[collect-pending] 未配置任何 AI 供应商 Key，跳过")
         return 0
     _guarded_stage("collect-pending", _do_collect_pending)

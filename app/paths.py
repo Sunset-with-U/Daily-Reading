@@ -29,7 +29,6 @@ def init_env() -> dict[str, Path]:
     """建用户目录并注入 DAILY_READING_* 环境变量（setdefault，可被外部覆盖）。幂等。"""
     base = user_base_dir()
     paths = {
-        "base": base,
         "data": base / "data",
         "user_config": base / "config",
         "logs": base / "logs",

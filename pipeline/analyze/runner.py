@@ -11,8 +11,6 @@ from concurrent.futures import ThreadPoolExecutor
 from ..datectx import DateContext
 from . import batches, providers
 
-_REALTIME_WORKERS = 4
-
 
 def execute(requests: list[dict], settings: dict, dctx: DateContext,
             kind: str, on_results=None) -> dict[str, dict]:
@@ -36,15 +34,17 @@ def execute(requests: list[dict], settings: dict, dctx: DateContext,
 
     if mode == "batch":
         return _execute_batch(requests, settings, dctx, kind, provider, on_results)
-    results = _execute_realtime(requests, provider)
+    results = _execute_realtime(requests, provider,
+                                int(ai_cfg.get("realtime_workers", 4)))
     if on_results:
         on_results(results)
     return results
 
 
-def _execute_realtime(requests: list[dict], provider: str) -> dict[str, dict]:
+def _execute_realtime(requests: list[dict], provider: str,
+                      workers: int = 4) -> dict[str, dict]:
     results: dict[str, dict] = {}
-    with ThreadPoolExecutor(max_workers=_REALTIME_WORKERS) as pool:
+    with ThreadPoolExecutor(max_workers=workers) as pool:
         futures = {pool.submit(providers.call_realtime, provider, r["params"]):
                    r["custom_id"] for r in requests}
         for fut, cid in futures.items():

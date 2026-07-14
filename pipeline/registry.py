@@ -7,7 +7,7 @@ from typing import Callable
 import yaml
 
 from .models import FetchContext, FetchResult, SourceConfig
-from .util import CONFIG_DIR, USER_CONFIG_DIR
+from .util import CONFIG_DIR, USER_CONFIG_DIR, load_user_yaml
 
 VALID_METHODS = {
     "rss", "json_api", "html_scrape", "rsshub", "telegram",
@@ -118,15 +118,8 @@ def _load_user_overlay() -> tuple[dict, list]:
 
     文件损坏只告警并忽略（可写文件不得击穿管线）。
     """
-    path = USER_CONFIG_DIR / "sources_user.yaml"
-    if not path.exists():
-        return {}, []
-    try:
-        doc = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
-        return dict(doc.get("overrides") or {}), list(doc.get("extra_sources") or [])
-    except Exception as exc:  # noqa: BLE001
-        print(f"[registry] sources_user.yaml 无效已忽略：{exc}")
-        return {}, []
+    doc = load_user_yaml(USER_CONFIG_DIR / "sources_user.yaml") or {}
+    return dict(doc.get("overrides") or {}), list(doc.get("extra_sources") or [])
 
 
 def _validate(src: SourceConfig, seen_ids: set[str]) -> None:

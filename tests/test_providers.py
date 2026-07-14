@@ -23,6 +23,17 @@ FACTORY = {"ai": {
 }}
 
 
+def test_default_models_match_factory_settings():
+    # DEFAULT_MODELS（代码兜底）与出厂 settings.yaml 的 models 表刻意两层——
+    # yaml 驱动面板显示、代码表保 fail-open。此断言防止两份清单漂移。
+    import yaml as _yaml
+
+    from pipeline.util import CONFIG_DIR
+
+    factory = _yaml.safe_load((CONFIG_DIR / "settings.yaml").read_text(encoding="utf-8"))
+    assert factory["ai"]["models"] == providers.DEFAULT_MODELS
+
+
 def test_model_for_factory_legacy_and_defaults():
     assert providers.model_for(FACTORY, "item") == "claude-haiku-4-5"
     assert providers.model_for(FACTORY, "report") == "claude-opus-4-8"

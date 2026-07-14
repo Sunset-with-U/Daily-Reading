@@ -2,11 +2,12 @@
 import { appApi } from "../api.js";
 import { esc } from "../format.js";
 
+// 仅展示名；密钥环境变量名与 Batch 能力位由 /api/status 的 providers 元数据下发
 const PROVIDERS = [
-  { id: "anthropic", name: "Claude（Anthropic）", keyName: "ANTHROPIC_API_KEY" },
-  { id: "openai", name: "ChatGPT（OpenAI）", keyName: "OPENAI_API_KEY" },
-  { id: "gemini", name: "Gemini（Google）", keyName: "GEMINI_API_KEY" },
-  { id: "deepseek", name: "DeepSeek", keyName: "DEEPSEEK_API_KEY" },
+  { id: "anthropic", name: "Claude（Anthropic）" },
+  { id: "openai", name: "ChatGPT（OpenAI）" },
+  { id: "gemini", name: "Gemini（Google）" },
+  { id: "deepseek", name: "DeepSeek" },
 ];
 const SOURCE_KEYS = [
   { name: "TWITTERAPI_IO_KEY", label: "twitterapi.io（X/Twitter 全量拉取，可选）" },
@@ -36,6 +37,7 @@ export async function mount(el, state) {
 
   const ai = settings.ai || {};
   const models = ai.models || {};
+  const provMeta = status.providers || {};
   const overlay = sourcesDoc.overlay || {};
   overlay.overrides = overlay.overrides || {};
   overlay.extra_sources = overlay.extra_sources || [];
@@ -74,7 +76,8 @@ export async function mount(el, state) {
     <div class="card settings-card">
       <h2>API 密钥</h2>
       <p class="form-hint">密钥保存进 macOS 钥匙串，界面永不回显明文。只需配置你选用的供应商。</p>
-      ${[...PROVIDERS.map((p) => ({ name: p.keyName, label: p.name })), ...SOURCE_KEYS]
+      ${[...PROVIDERS.filter((p) => provMeta[p.id])
+          .map((p) => ({ name: provMeta[p.id].env, label: p.name })), ...SOURCE_KEYS]
         .map((k) => keyRow(k, status.keys)).join("")}
     </div>
 
@@ -126,7 +129,7 @@ export async function mount(el, state) {
     el.querySelector("#set-model-item").value = m.item || "";
     el.querySelector("#set-model-report").value = m.report || "";
     el.querySelector("#mode-hint").textContent =
-      p === "deepseek" || p === "gemini"
+      provMeta[p] && !provMeta[p].batch
         ? "该供应商暂不支持 Batch，省钱模式将自动按实时执行" : "";
   };
   modelInputs();
@@ -202,10 +205,10 @@ export async function mount(el, state) {
     const url = el.querySelector("#new-src-url").value.trim();
     if (!name || !url) return;
     const id = "user-" + name.toLowerCase().replace(/[^a-z0-9一-鿿]+/g, "-").slice(0, 30);
-    overlay.extra_sources.push({ id, name, name_zh: name, method: "rss", url,
-                                 category: "newsletter", tier: "C" });
-    sourcesDoc.sources.push({ id, name_zh: name, category: "newsletter", tier: "C",
-                              method: "rss", enabled: true, schedule: "both", notes: "自定义源" });
+    const entry = { id, name, name_zh: name, method: "rss", url,
+                    category: "newsletter", tier: "C" };
+    overlay.extra_sources.push(entry);
+    sourcesDoc.sources.push({ ...entry, enabled: true, schedule: "both", notes: "自定义源" });
     el.querySelector("#new-src-name").value = el.querySelector("#new-src-url").value = "";
     renderSources();
   });

@@ -8,11 +8,12 @@ from __future__ import annotations
 
 import threading
 import traceback
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 
+from pipeline import datectx
+from pipeline.datectx import BEIJING
 from pipeline.util import STATE_DIR, load_json, save_json
 
-BEIJING = timezone(timedelta(hours=8))
 EDITION_TIMES = {"morning": 7, "evening": 20}  # 北京整点
 _STATE_FILE = STATE_DIR / "schedule_state.json"
 
@@ -96,15 +97,16 @@ class Scheduler:
             if edition:
                 args += ["--edition", edition]
             cli_main(args)
-            now_bj = datetime.now(BEIJING)
-            effective = edition or ("morning" if now_bj.hour < 12 else "evening")
+            # 归班规则/北京日期复用 datectx（与管线同一权威）
+            dctx = datectx.build()
+            effective = edition or dctx.edition
             # 手动与自动一律记账：面板跑过早报后，定时器不再重复跑同一班次
             last_runs = load_json(_STATE_FILE, {}) or {}
-            last_runs[effective] = now_bj.strftime("%Y-%m-%d")
+            last_runs[effective] = dctx.date_bj
             save_json(_STATE_FILE, last_runs)
-            self.last_result = f"{now_bj.strftime('%H:%M')} {'早报' if effective == 'morning' else '晚报'}完成"
-            self.notify("Daily Reading",
-                        f"{'早报' if effective == 'morning' else '晚报'}已更新，点击查看")
+            label = "早报" if effective == "morning" else "晚报"
+            self.last_result = f"{datetime.now(BEIJING).strftime('%H:%M')} {label}完成"
+            self.notify("Daily Reading", f"{label}已更新，点击查看")
         except Exception as exc:  # noqa: BLE001 — 失败也要通知
             self.last_result = f"运行失败：{type(exc).__name__}"
             self.notify("Daily Reading", f"本次运行失败（{type(exc).__name__}），详见日志")

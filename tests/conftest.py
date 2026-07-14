@@ -62,6 +62,33 @@ def stub_http(monkeypatch):
     return _install
 
 
+class FakeKeyring:
+    """内存 keyring 桩（test_keys / test_server 共用，不碰真 Keychain）。"""
+
+    def __init__(self):
+        self.store = {}
+
+    def set_password(self, service, name, value):
+        self.store[(service, name)] = value
+
+    def get_password(self, service, name):
+        return self.store.get((service, name))
+
+    def delete_password(self, service, name):
+        del self.store[(service, name)]
+
+
+@pytest.fixture
+def fake_keyring(monkeypatch):
+    from app import keys
+
+    fake = FakeKeyring()
+    monkeypatch.setattr(keys, "_keyring", lambda: fake)
+    for name in keys.MANAGED_KEYS:
+        monkeypatch.delenv(name, raising=False)
+    return fake
+
+
 @pytest.fixture
 def make_ctx():
     from pipeline.models import FetchContext

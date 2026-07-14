@@ -40,6 +40,25 @@ def deep_merge(base: dict, override: dict) -> dict:
     return out
 
 
+def load_user_yaml(path: Path) -> dict | None:
+    """用户覆盖层 YAML 的 fail-open 读取：不存在/损坏/顶层非映射 → None（告警）。
+
+    可写文件绝不击穿管线——cli/registry/persist/server 的用户层读取统一走这里。
+    """
+    if not path.exists():
+        return None
+    try:
+        import yaml
+
+        doc = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+        if not isinstance(doc, dict):
+            raise ValueError("顶层必须是映射")
+        return doc
+    except Exception as exc:  # noqa: BLE001 — 用户文件坏了按"没写"处理
+        print(f"[config] {path.name} 无效已忽略：{exc}")
+        return None
+
+
 def load_json(path: Path, default: Any = None) -> Any:
     if path.exists():
         try:

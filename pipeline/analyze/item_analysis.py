@@ -71,18 +71,21 @@ def analyze_items(dctx: DateContext, settings: dict, ai_cap: int = 0) -> str:
     # 先落盘 attempts 计数，防止中途被杀后重复计数丢失
     persist.save_items_doc(dctx.date_bj, doc)
 
+    stats = {"done": 0, "failed": 0}
+
     def _persist_chunk(chunk_results: dict) -> None:
-        # 每个 chunk 回收即落盘，进程被杀不丢已付费结果（重复合并幂等）
-        _apply_results(doc, chunk_results, model)
+        # 每个 chunk 回收即合并落盘（batch 每 chunk 一次，实时结束时一次），
+        # 进程被杀不丢已付费结果；统计随手累计，结束后无需重放合并
+        merged = _apply_results(doc, chunk_results, model)
+        stats["done"] += merged["done"]
+        stats["failed"] += merged["failed"]
         persist.save_items_doc(dctx.date_bj, doc)
 
     results = runner.execute(requests, settings, dctx, kind="items",
                              on_results=_persist_chunk)
-    merged = _apply_results(doc, results, model)
     pending = len(requests) - len(results)  # 只有超时批次缺席（已登记续传）
-    persist.save_items_doc(dctx.date_bj, doc)
-    return (f"提交 {len(requests)}，完成 {merged['done']}，"
-            f"失败 {merged['failed']}，待续传 {pending}")
+    return (f"提交 {len(requests)}，完成 {stats['done']}，"
+            f"失败 {stats['failed']}，待续传 {pending}")
 
 
 def _apply_results(doc: dict, results: dict[str, dict], model: str) -> dict:

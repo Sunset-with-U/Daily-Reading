@@ -122,6 +122,8 @@ def _make_handler(state: AppState):
 
         # ── API 实现 ───────────────────────────────────
         def _api_status(self):
+            from pipeline.analyze.providers import PROVIDERS
+
             from . import keys
 
             settings = _load_settings()
@@ -131,6 +133,9 @@ def _make_handler(state: AppState):
                 "version": state.version,
                 "provider": ai.get("provider", "anthropic"),
                 "ai_mode": ai.get("mode", "batch"),
+                # 能力矩阵唯一事实源在 providers——前端提示/密钥名从这里取
+                "providers": {name: {"batch": info["batch"], "env": info["env"]}
+                              for name, info in PROVIDERS.items()},
                 "keys": keys.key_status(),
                 "scheduler": state.scheduler_status(),
             })
@@ -141,11 +146,9 @@ def _make_handler(state: AppState):
             unknown = [k for k in patch if k not in SETTINGS_SECTIONS]
             if unknown:
                 return self._error(400, f"不可写的设置段：{unknown}")
-            from pipeline.util import deep_merge, load_json  # noqa: F401 (deep_merge)
+            from pipeline.util import deep_merge, load_user_yaml
 
-            current = {}
-            if overlay_file.exists():
-                current = yaml.safe_load(overlay_file.read_text(encoding="utf-8")) or {}
+            current = load_user_yaml(overlay_file) or {}
             merged = deep_merge(current, patch)
             overlay_file.write_text(
                 yaml.safe_dump(merged, allow_unicode=True, sort_keys=False),
@@ -173,10 +176,10 @@ def _make_handler(state: AppState):
                 "tier": s.tier, "method": s.method, "enabled": s.enabled,
                 "schedule": s.schedule, "notes": s.notes,
             } for s in load_sources()]
-            overlay = {}
+            from pipeline.util import load_user_yaml
+
             overlay_file = state.paths["user_config"] / "sources_user.yaml"
-            if overlay_file.exists():
-                overlay = yaml.safe_load(overlay_file.read_text(encoding="utf-8")) or {}
+            overlay = load_user_yaml(overlay_file) or {}
             return self._json({"sources": srcs, "overlay": overlay})
 
         def _api_sources_put(self):

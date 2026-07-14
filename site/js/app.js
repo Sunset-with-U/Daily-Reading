@@ -81,16 +81,15 @@ function mountTicker() {
 async function boot() {
   initTheme(() => { mountTicker(); render(); });  // 主题切换 → 重建 widget + 重绘视图
 
-  // App 模式探测：本地服务存在则亮出设置入口；Pages 静态托管保持隐藏
-  state.app = await appApi.status();
+  // 三个独立请求并行发起；App 模式探测成功则亮出设置入口（Pages 保持隐藏）
+  [state.app, state.index, state.watchlistConf] = await Promise.all([
+    appApi.status(), api.index(), api.watchlistConf(),
+  ]);
   if (state.app) {
     document.querySelector('#nav a[data-route="settings"]').hidden = false;
   }
-
-  state.index = await api.index();
   state.dates = (state.index?.dates || []).map((d) => d.date);
   state.date = state.index?.latest_date || state.dates[0] || null;
-  state.watchlistConf = await api.watchlistConf();
 
   document.getElementById("date-prev").addEventListener("click", () => {
     const i = state.dates.indexOf(state.date);

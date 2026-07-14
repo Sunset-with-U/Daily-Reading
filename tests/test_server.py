@@ -5,12 +5,11 @@ import httpx
 import pytest
 import yaml
 
-from app import keys as keys_mod
 from app.server import AppState, make_server
 
 
 @pytest.fixture
-def app_server(tmp_path, monkeypatch):
+def app_server(tmp_path, monkeypatch, fake_keyring):
     site = tmp_path / "site"
     data = tmp_path / "data"
     user_config = tmp_path / "config"
@@ -23,18 +22,8 @@ def app_server(tmp_path, monkeypatch):
     monkeypatch.setattr("pipeline.cli.USER_CONFIG_DIR", user_config)
     monkeypatch.setattr("pipeline.registry.USER_CONFIG_DIR", user_config)
 
-    # keyring 用内存桩
-    fake_store = {}
-    monkeypatch.setattr(keys_mod, "_keyring", lambda: type("K", (), {
-        "set_password": staticmethod(lambda s, n, v: fake_store.__setitem__((s, n), v)),
-        "get_password": staticmethod(lambda s, n: fake_store.get((s, n))),
-        "delete_password": staticmethod(lambda s, n: fake_store.pop((s, n))),
-    })())
-    for name in keys_mod.MANAGED_KEYS:
-        monkeypatch.delenv(name, raising=False)
-
     state = AppState({"site": site, "data": data, "user_config": user_config,
-                      "logs": tmp_path / "logs", "base": tmp_path})
+                      "logs": tmp_path / "logs"})
     server = make_server(state, port=0)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
@@ -58,6 +47,10 @@ def test_status_and_settings_roundtrip(app_server):
     assert status["mode"] == "app"
     assert status["provider"] == "anthropic"
     assert status["keys"]["ANTHROPIC_API_KEY"] is False
+    # 前端提示/密钥名依赖的能力矩阵元数据
+    assert status["providers"]["anthropic"]["batch"] is True
+    assert status["providers"]["gemini"]["batch"] is False
+    assert status["providers"]["openai"]["env"] == "OPENAI_API_KEY"
 
     headers = {"X-DR-Token": state.token}
     resp = httpx.put(f"{base}/api/settings", headers=headers,
