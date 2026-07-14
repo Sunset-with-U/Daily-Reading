@@ -7,7 +7,7 @@
 [tool.briefcase]
 project_name = "Daily Reading"
 bundle = "io.github.sunset-with-u"
-version = "2.1.0"        # 与 app/server.py 的 AppState.version 保持一致
+version = "2.2.0"        # 与 app/server.py 的 AppState.version 保持一致
 license = "MIT"
 license-files = ["LICENSE"]
 author = "Sunset-with-U"

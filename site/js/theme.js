@@ -7,9 +7,11 @@ export function currentTheme() {
 
 export function initTheme(onChange) {
   const btn = document.getElementById("theme-toggle");
+  const icon = (theme) => (theme === "dark" ? "☀" : "☾");  // 显示"切过去"的目标
   const apply = (theme) => {
     document.documentElement.dataset.theme = theme;
-    btn.textContent = theme === "dark" ? "◑" : "◐";
+    btn.textContent = icon(theme);
+    btn.title = theme === "dark" ? "切换到白天模式" : "切换到黑夜模式";
     onChange?.(theme);
   };
   btn.addEventListener("click", () => {
@@ -21,5 +23,6 @@ export function initTheme(onChange) {
   matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
     if (!localStorage.getItem(KEY)) apply(e.matches ? "dark" : "light");
   });
-  btn.textContent = currentTheme() === "dark" ? "◑" : "◐";
+  btn.textContent = icon(currentTheme());
+  btn.title = currentTheme() === "dark" ? "切换到白天模式" : "切换到黑夜模式";
 }

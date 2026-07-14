@@ -26,14 +26,19 @@ def bundled_root() -> Path:
 
 
 def init_env() -> dict[str, Path]:
-    """建用户目录并注入 DAILY_READING_* 环境变量（setdefault，可被外部覆盖）。幂等。"""
+    """建用户目录并注入 DAILY_READING_* 环境变量（setdefault，可被外部覆盖）。幂等。
+
+    环境变量已预设时（开发/测试重定向）路径字典同样以其为准——
+    保证服务端读的目录与管线写的目录永远一致。
+    """
     base = user_base_dir()
+    env = os.environ.get
     paths = {
-        "data": base / "data",
-        "user_config": base / "config",
+        "data": Path(env("DAILY_READING_DATA_DIR", "") or base / "data"),
+        "user_config": Path(env("DAILY_READING_USER_CONFIG_DIR", "") or base / "config"),
         "logs": base / "logs",
         "site": bundled_root() / "site",
-        "config": bundled_root() / "config",
+        "config": Path(env("DAILY_READING_CONFIG_DIR", "") or bundled_root() / "config"),
     }
     for key in ("data", "user_config", "logs"):
         paths[key].mkdir(parents=True, exist_ok=True)

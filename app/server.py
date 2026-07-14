@@ -16,7 +16,7 @@ from pathlib import Path
 import yaml
 
 # 面板可写的 settings 顶层段（全部是成本/行为旋钮，无敏感信息）
-SETTINGS_SECTIONS = ("ai", "fetch", "report", "persist", "dedupe")
+SETTINGS_SECTIONS = ("ai", "fetch", "report", "persist", "dedupe", "schedule")
 
 
 class AppState:
@@ -28,7 +28,7 @@ class AppState:
         self.run_requested = threading.Event()   # scheduler 消费
         self.run_edition: str | None = None
         self.scheduler_status = lambda: {}       # Phase 5 注入
-        self.version = "2.1.0"
+        self.version = "2.2.0"
 
 
 def make_server(state: AppState, port: int = 0) -> ThreadingHTTPServer:

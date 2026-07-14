@@ -1,10 +1,13 @@
 # Daily-Reading · 每日金融研究 macOS 桌面应用
 
+![Daily Reading 界面](docs/screenshots/cover.png)
+
 面向职业交易员与量化研究者的**桌面情报终端**：每天早晚两班（北京 07:00 早报 / 20:00 晚报）自动从 120+ 个高质量信息源抓取内容，用你自己的 AI（**Claude / ChatGPT / Gemini / DeepSeek 任选**）逐条打标签、评级、写摘要与影响推演，再生成一份深度中文市场报告与关注清单——全部在你的 MacBook 本机完成，数据不经过任何第三方服务器。
 
 **下载即用，全部配置都在 App 内的设置面板完成**（就像 Claude 桌面版）：粘贴你自己的 API Key（存进 macOS 钥匙串）、勾选感兴趣的信息源、选实时或省钱模式，然后等每天两班报告自动送达（菜单栏常驻 + 系统通知）。
 
-> 🚀 **三分钟上手**：照着 **[SETUP.md](SETUP.md)** 走——下载 `.dmg` → 拖进应用程序 → 右键打开 → 设置面板粘贴 API Key → 点「立即运行」。不需要编程经验，不需要配置 GitHub。
+> 🚀 **三分钟上手**：照着 **[SETUP.md](SETUP.md)** 走——从 [Releases](../../releases) 下载 `.dmg` → 拖进应用程序 → 右键打开 → 设置面板粘贴 API Key → 点「立即运行」。不需要编程经验，不需要配置 GitHub。
+> 📖 **完整说明书**：**[docs/USER_GUIDE.md](docs/USER_GUIDE.md)**——设置面板逐项详解、自定义运行时间、花费控制、故障排查。
 
 ## 它每天为你做什么
 
@@ -24,9 +27,21 @@ App 内第七个视图「设置」，四个分区：
 | **AI 引擎** | 四家供应商任选；逐条分析/报告模型分别指定；实时（即时可见）或省钱 Batch（五折）模式；每日 AI 条数上限（成本护栏） |
 | **API 密钥** | 粘贴各家 AI Key 与可选数据源 Key（twitterapi.io / FRED）——全部存 **macOS 钥匙串**，界面永不回显明文 |
 | **信息源** | 120+ 源按分类逐个开关；一行添加自定义 RSS 源；配置 RSSHub 实例（财联社等 8 个源需要） |
-| **运行** | 手动立即运行早报/晚报；查看下次自动运行时间 |
+| **运行与定时** | 手动立即运行早报/晚报；**自定义两班自动运行时间**（默认北京 07:00 / 20:00，改成任意整点即刻生效）；查看下次自动运行时间 |
 
 所有改动只写到本机 `~/Library/Application Support/Daily-Reading/`，出厂配置永不被破坏，改坏了删掉用户配置文件即恢复默认。
+
+## 界面一览
+
+| 深色 · 信息流 | 深色 · 市场快照 |
+|---|---|
+| ![信息流](docs/screenshots/feed-dark.png) | ![市场快照](docs/screenshots/market-dark.png) |
+
+| 浅色 · 设置面板 | 浅色 · 自定义运行时间 |
+|---|---|
+| ![设置面板](docs/screenshots/settings-light.png) | ![运行与定时](docs/screenshots/settings-schedule-light.png) |
+
+更多：[深色报告页](docs/screenshots/report-dark.png) · [关注清单](docs/screenshots/watchlist-light.png)。右上角 ☾/☀ 一键切换白天/黑夜模式。
 
 ## 架构一览
 

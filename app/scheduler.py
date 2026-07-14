@@ -1,4 +1,4 @@
-"""本地定时：北京 07:00 早报 / 20:00 晚报 + 错过补跑 + 手动触发。
+"""本地定时：早晚两班自动运行（默认北京 07:00 / 20:00，面板可自定义）+ 错过补跑 + 手动触发。
 
 核心判定 due_edition() 是纯函数（Linux 可全测）；循环线程只做编排。
 补跑策略：只补"最近一个已到点"的班次——App 晚上才打开时直接跑晚报，
@@ -14,31 +14,51 @@ from pipeline import datectx
 from pipeline.datectx import BEIJING
 from pipeline.util import STATE_DIR, load_json, save_json
 
-EDITION_TIMES = {"morning": 7, "evening": 20}  # 北京整点
+EDITION_TIMES = {"morning": 7, "evening": 20}  # 出厂默认（北京整点）
 _STATE_FILE = STATE_DIR / "schedule_state.json"
 
 
-def due_edition(now_bj: datetime, last_runs: dict[str, str]) -> str | None:
+def schedule_times(settings: dict) -> dict[str, int]:
+    """settings.schedule.{morning,evening}_hour → 班次时间表（面板可自定义）。
+
+    非法值（非整数/越界）逐项回退出厂默认——可写配置不得让定时器停摆。
+    """
+    sc = settings.get("schedule") or {}
+    times = {}
+    for edition, default in EDITION_TIMES.items():
+        try:
+            hour = int(sc.get(f"{edition}_hour", default))
+            times[edition] = hour if 0 <= hour <= 23 else default
+        except (TypeError, ValueError):
+            times[edition] = default
+    return times
+
+
+def due_edition(now_bj: datetime, last_runs: dict[str, str],
+                times: dict[str, int] | None = None) -> str | None:
     """返回当前应跑的班次（无则 None）。
 
     last_runs: {"morning": "YYYY-MM-DD", ...}——各班次最近一次运行的北京日期。
-    只考虑今天已到点的班次中最晚的一个；今天已跑过即不再跑（跨日不补昨）。
+    times: 班次时间表（缺省出厂）。只考虑今天已到点的班次中最晚的一个；
+    今天已跑过即不再跑（跨日不补昨）。
     """
+    times = times or EDITION_TIMES
     today = now_bj.strftime("%Y-%m-%d")
-    arrived = [e for e, h in EDITION_TIMES.items() if now_bj.hour >= h]
+    arrived = [e for e, h in times.items() if now_bj.hour >= h]
     if not arrived:
         return None
-    latest = max(arrived, key=lambda e: EDITION_TIMES[e])
+    latest = max(arrived, key=lambda e: times[e])
     return latest if last_runs.get(latest) != today else None
 
 
-def next_run_at(now_bj: datetime) -> str:
+def next_run_at(now_bj: datetime, times: dict[str, int] | None = None) -> str:
     """下一个自动班次的北京时间（面板展示用）。"""
-    for hour in sorted(EDITION_TIMES.values()):
+    times = times or EDITION_TIMES
+    for hour in sorted(times.values()):
         if now_bj.hour < hour:
             return now_bj.replace(hour=hour, minute=0, second=0).strftime("%m-%d %H:%M 北京时间")
     nxt = (now_bj + timedelta(days=1)).replace(
-        hour=min(EDITION_TIMES.values()), minute=0, second=0)
+        hour=min(times.values()), minute=0, second=0)
     return nxt.strftime("%m-%d %H:%M 北京时间")
 
 
@@ -56,10 +76,17 @@ class Scheduler:
 
     def status(self) -> dict:
         return {
-            "next_run": next_run_at(datetime.now(BEIJING)),
+            "next_run": next_run_at(datetime.now(BEIJING), self._times()),
             "running": self.running_edition,
             "last_result": self.last_result,
         }
+
+    @staticmethod
+    def _times() -> dict[str, int]:
+        """当前生效的班次时间表：每次读盘 → 面板改完下一 tick 即生效，无需重启。"""
+        from pipeline.cli import load_settings
+
+        return schedule_times(load_settings())
 
     def loop(self) -> None:
         while not self._stop.is_set():
@@ -81,7 +108,7 @@ class Scheduler:
             self._run(edition)
             return
         last_runs = load_json(_STATE_FILE, {}) or {}
-        edition = due_edition(datetime.now(BEIJING), last_runs)
+        edition = due_edition(datetime.now(BEIJING), last_runs, self._times())
         if edition:
             self._run(edition)
 

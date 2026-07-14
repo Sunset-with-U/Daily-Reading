@@ -1,19 +1,27 @@
 # 桌面 App 发布通道：在 macOS runner 上用 Briefcase 打出 .app/.dmg。
-# 与云端数据管线（daily.yml / health.yml）完全独立，互不影响。
 #
-# 触发：手动 workflow_dispatch，或推送 v* 标签（如 v2.0.0）。
-# 产物：Actions artifact 永远上传；tag 触发时额外挂到 draft Release。
+# 两种用法：
+#   1) Actions 页手动 Run workflow——publish_tag 留空只出构建产物（Artifacts）；
+#      填版本号（如 v2.2.0）则同时创建正式 GitHub Release 并把 .dmg 挂上去，
+#      所有人都能在 Releases 页直接下载。
+#   2) 推送 v* 标签——效果等同于填了 publish_tag。
+#
 # 无签名证书时用 ad-hoc 签名（用户首次右键打开即可），
 # 接入 Developer ID 签名/公证的步骤见 docs/PACKAGING.md。
 name: release
 
 on:
   workflow_dispatch:
+    inputs:
+      publish_tag:
+        description: "发布正式版：填版本标签（如 v2.2.0）则创建 Release 挂 .dmg；留空只出构建产物"
+        type: string
+        default: ""
   push:
     tags: ["v*"]
 
 permissions:
-  contents: write   # tag 触发时创建 draft Release 并挂 .dmg
+  contents: write   # 创建 Release / 标签
 
 jobs:
   build-macos:
@@ -52,10 +60,14 @@ jobs:
           path: dist/*.dmg
           if-no-files-found: error
 
-      - name: 挂到 draft Release（仅 tag 触发）
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v2
-        with:
-          files: dist/*.dmg
-          draft: true
-          generate_release_notes: true
+      - name: 创建正式 GitHub Release（填了 publish_tag 或推了 v* 标签）
+        if: inputs.publish_tag != '' || startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.publish_tag || github.ref_name }}
+        run: |
+          # 已存在同名 Release 时只补挂产物（幂等，可安全重跑）
+          gh release create "$TAG" dist/*.dmg \
+            --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+            --title "Daily Reading $TAG" --generate-notes --latest \
+          || gh release upload "$TAG" dist/*.dmg --repo "$GITHUB_REPOSITORY" --clobber
